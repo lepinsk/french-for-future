@@ -17,5 +17,6 @@
 *.out
 *.app
 
-# Build directory
+# Pebble-specific
 build/
+.lock-waf_darwin_build 
