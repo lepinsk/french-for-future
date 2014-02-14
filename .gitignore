@@ -19,4 +19,5 @@
 
 # Pebble-specific
 build/
-.lock-waf_darwin_build 
+*.lock-waf_darwin_build 
+.lock-waf_darwin_build
