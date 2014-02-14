@@ -5,7 +5,7 @@ A friendly weather watchface for Pebble devices running Pebble OS 2.0 or greater
 
 ### Design
 
-Design by [Eric Akaoka](https://github.com/akaoka) plan found [here](https://github.com/lepinsk/akaoka-sans/blob/master/design.md).
+Design by [Eric Akaoka](https://github.com/akaoka). Design plan found [here](https://github.com/lepinsk/akaoka-sans/blob/master/design.md).
 
 But it looks like this:
 
