@@ -1,6 +1,5 @@
 #include <pebble.h>
 
-#include "weather_layer.h"
 #include "network.h"
 #include "config.h"
 #include <ctype.h>
@@ -21,7 +20,6 @@ static TextLayer *day_layer;
 static TextLayer *time_layer;
 static TextLayer *temp_layer;
 static TextLayer *cond_layer;
-static WeatherLayer *weather_layer;
 
 GBitmap *line_bmp;
 BitmapLayer *line_layer;
@@ -30,7 +28,6 @@ static char date_text[] = "XXXXXXXXX 00";
 static char day_text[] = "XXXXXXXXX";
 static char time_text[] = "00:00";
 static char temp_text[] = "XXXX";
-//static char cond_text[] = "XXXXXXXXX";
 
 /* Preload the fonts */
 GFont font_date;
@@ -77,7 +74,7 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
     snprintf(day_text, sizeof(day_text), "%s", day_text_pre);
     text_layer_set_text(day_layer, upcase(day_text));
 
-    text_layer_set_text(temp_layer, "-99°");
+    text_layer_set_text(temp_layer, "");
     text_layer_set_text(cond_layer, "LOADING  ");
   }
 
@@ -90,10 +87,10 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
       text_layer_set_text(cond_layer, "LOADING  ");
     }
     else if (animation_step == 1) {
-      text_layer_set_text(cond_layer, "LOADING. ");
+      text_layer_set_text(cond_layer, "LOADING ");
     }
     else if (animation_step >= 2) {
-      text_layer_set_text(cond_layer, "LOADING..");
+      text_layer_set_text(cond_layer, "LOADING");
     }
     animation_step = (animation_step + 1) % 3;
   }
@@ -108,13 +105,9 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
       if (weather_data->updated > time(NULL) + 1800) {
         stale = true;
       }
-      //weather_layer_set_temperature(weather_layer, weather_data->temperature, stale);
-      
 
-
-
-      int t = weather_data->temperature;
-      snprintf(temp_text, sizeof(temp_text), "%i%s", t, stale ? " " : "°");
+      // update the temp layer
+      snprintf(temp_text, sizeof(temp_text), "%i%s", weather_data->temperature, stale ? " " : "°");
       text_layer_set_text(temp_layer, temp_text);
       
 
@@ -169,9 +162,6 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
       else {
         text_layer_set_text(cond_layer, "HMM");
       }
-
-
-      //weather_layer_set_condition(weather_layer, weather_data->condition);
     }
   }
 
@@ -233,11 +223,6 @@ static void init(void) {
   bitmap_layer_set_bitmap(line_layer, new_icon);
   layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(line_layer));
 
-
-  // Add weather layer
-  weather_layer = weather_layer_create(GRect(0, 90, 144, 80));
-  //layer_add_child(window_get_root_layer(window), weather_layer);
-
   // Update the screen right away
   time_t now = time(NULL);
   handle_tick(localtime(&now), SECOND_UNIT | MINUTE_UNIT | HOUR_UNIT | DAY_UNIT );
@@ -254,7 +239,6 @@ static void deinit(void) {
   text_layer_destroy(date_layer);
   text_layer_destroy(temp_layer);
   text_layer_destroy(cond_layer);
-  weather_layer_destroy(weather_layer);
   bitmap_layer_destroy(line_layer);
 
   fonts_unload_custom_font(font_date);
