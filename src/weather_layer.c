@@ -41,23 +41,109 @@ WeatherLayer *weather_layer_create(GRect frame)
 
   // Add background layer
   wld->temp_layer_background = text_layer_create(GRect(0, 10, 144, 68));
-  text_layer_set_background_color(wld->temp_layer_background, GColorWhite);
+  text_layer_set_background_color(wld->temp_layer_background, GColorClear);
   layer_add_child(weather_layer, text_layer_get_layer(wld->temp_layer_background));
 
   // Add temperature layer
   wld->temp_layer = text_layer_create(GRect(70, 19, 72, 80));
   text_layer_set_background_color(wld->temp_layer, GColorClear);
+  text_layer_set_text_color(wld->temp_layer, GColorWhite);
   text_layer_set_text_alignment(wld->temp_layer, GTextAlignmentCenter);
-  text_layer_set_font(wld->temp_layer, large_font);
+  text_layer_set_font(wld->temp_layer, small_font);
   layer_add_child(weather_layer, text_layer_get_layer(wld->temp_layer));
 
   // Add bitmap layer
+  
   wld->icon_layer = bitmap_layer_create(GRect(9, 13, 60, 60));
-  layer_add_child(weather_layer, bitmap_layer_get_layer(wld->icon_layer));
+  //layer_add_child(weather_layer, bitmap_layer_get_layer(wld->icon_layer));
+  
+
+
+  // Add conditions layer
+  wld->conditions_layer = text_layer_create(GRect(0,50,50,50));
+  text_layer_set_background_color(wld->conditions_layer, GColorClear);
+  text_layer_set_text_color(wld->conditions_layer, GColorWhite);
+  text_layer_set_text_alignment(wld->conditions_layer, GTextAlignmentCenter);
+  text_layer_set_font(wld->conditions_layer, small_font);
+  layer_add_child(weather_layer, text_layer_get_layer(wld->conditions_layer));
 
   wld->icon = NULL;
 
   return weather_layer;
+}
+
+void weather_layer_set_condition(WeatherLayer* weather_layer, int c) {
+  WeatherLayerData *wld = layer_get_data(weather_layer);
+  text_layer_set_font(wld->conditions_layer, small_font);
+  text_layer_set_text_alignment(wld->conditions_layer, GTextAlignmentCenter);
+  
+
+/*
+sunny
+clear
+p. cloudy
+cloudy
+cold
+drizzle
+foggy
+hot
+sleet
+snowy
+rainy
+stormy
+windy
+*/
+    // Thunderstorm
+  if (c < 300) {
+    text_layer_set_text(wld->conditions_layer, "STORMY");
+  }
+  // Drizzle
+  else if (c < 500) {
+    text_layer_set_text(wld->conditions_layer, "DRIZZLE");
+  }
+  // Rain / Freezing rain / Shower rain
+  else if (c < 600) {
+    text_layer_set_text(wld->conditions_layer, "RAINY");
+  }
+  // Snow
+  else if (c < 700) {
+    text_layer_set_text(wld->conditions_layer, "SNOWY");
+  }
+  // Fog / Mist / Haze / etc.
+  else if (c < 771) {
+    text_layer_set_text(wld->conditions_layer, "FOGGY");
+  }
+  // Tornado / Squalls
+  else if (c < 800) {
+    text_layer_set_text(wld->conditions_layer, "WINDY");
+  }
+  // Sky is clear
+  else if (c == 800) {
+    text_layer_set_text(wld->conditions_layer, "CLEAR");
+  }
+  // few/scattered/broken clouds
+  else if (c < 804) {
+    text_layer_set_text(wld->conditions_layer, "P.CLOUDY");
+  }
+  // overcast clouds
+  else if (c == 804) {
+    text_layer_set_text(wld->conditions_layer, "CLOUDY");
+  }
+  // Extreme
+  else if ((c >= 900 && c < 903) || (c > 904 && c < 1000)) {
+    text_layer_set_text(wld->conditions_layer, "WINDY");
+  }
+  // Cold
+  else if (c == 903) {
+    text_layer_set_text(wld->conditions_layer, "COLD");
+  }
+  // Hot
+  else if (c == 904) {
+    text_layer_set_text(wld->conditions_layer, "HOT");
+  }
+  else {
+    text_layer_set_text(wld->conditions_layer, "HMM");
+  }
 }
 
 void weather_layer_set_icon(WeatherLayer* weather_layer, WeatherIcon icon) {
@@ -82,22 +168,22 @@ void weather_layer_set_temperature(WeatherLayer* weather_layer, int16_t t, bool 
 
   // Temperature between -9° -> 9° or 20° -> 99°
   if ((t >= -9 && t <= 9) || (t >= 20 && t < 100)) {
-    text_layer_set_font(wld->temp_layer, large_font);
+    text_layer_set_font(wld->temp_layer, small_font);
     text_layer_set_text_alignment(wld->temp_layer, GTextAlignmentCenter);
 
-	// Is the temperature below zero?
-	if (wld->temp_str[0] == '-') {
-	  memmove(
-          wld->temp_str + 1 + 1,
-          wld->temp_str + 1,
-          5 - (1 + 1)
-      );
-	  memcpy(&wld->temp_str[1], " ", 1);
-	}
+  	// Is the temperature below zero?
+  	if (wld->temp_str[0] == '-') {
+  	  memmove(
+            wld->temp_str + 1 + 1,
+            wld->temp_str + 1,
+            5 - (1 + 1)
+        );
+  	  memcpy(&wld->temp_str[1], " ", 1);
+  	}
   }
   // Temperature between 10° -> 19°
   else if (t >= 10 && t < 20) {
-    text_layer_set_font(wld->temp_layer, large_font);
+    text_layer_set_font(wld->temp_layer, small_font);
     text_layer_set_text_alignment(wld->temp_layer, GTextAlignmentLeft);
   }
   // Temperature above 99° or below -9°
@@ -112,6 +198,7 @@ void weather_layer_destroy(WeatherLayer* weather_layer) {
   WeatherLayerData *wld = layer_get_data(weather_layer);
 
   text_layer_destroy(wld->temp_layer);
+  text_layer_destroy(wld->conditions_layer);
   text_layer_destroy(wld->temp_layer_background);
   bitmap_layer_destroy(wld->icon_layer);
 

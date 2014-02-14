@@ -16,6 +16,8 @@ Details:
 * and the temperature is left-aligned, 10px from the left edge
 * the conditions are right-aligned, 10px from the right edge
 
+(Pebble has a 144 x 168 pixel display.)
+
 
 Weather strings: 
 * sunny

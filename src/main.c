@@ -3,9 +3,11 @@
 #include "weather_layer.h"
 #include "network.h"
 #include "config.h"
+#include <ctype.h>
 
-#define TIME_FRAME      (GRect(0, 2, 144, 168-6))
-#define DATE_FRAME      (GRect(1, 66, 144, 168-62))
+#define DAY_FRAME       (GRect(0, 17, 144, 168-62))
+#define TIME_FRAME      (GRect(0, 33, 144, 168-20))
+#define DATE_FRAME      (GRect(0, 90, 144, 168-62))
 
 /* Keep a pointer to the current weather data as a global variable */
 static WeatherData *weather_data;
@@ -13,15 +15,26 @@ static WeatherData *weather_data;
 /* Global variables to keep track of the UI elements */
 static Window *window;
 static TextLayer *date_layer;
+static TextLayer *day_layer;
 static TextLayer *time_layer;
 static WeatherLayer *weather_layer;
 
-static char date_text[] = "XXX 00";
+static char date_text[] = "XXXXXXXXX 00";
+static char day_text[] = "XXXXXXXXX";
 static char time_text[] = "00:00";
 
 /* Preload the fonts */
 GFont font_date;
 GFont font_time;
+
+char *upcase(char *str)
+{
+    char *s = str;
+    while (*s) {
+        *s++ = toupper((int)*s);
+    }
+    return str;
+}
 
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 {
@@ -45,10 +58,15 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
   }
   if (units_changed & DAY_UNIT) {
     // Update the date - Without a leading 0 on the day of the month
-    char day_text[4];
-    strftime(day_text, sizeof(day_text), "%a", tick_time);
-    snprintf(date_text, sizeof(date_text), "%s %i", day_text, tick_time->tm_mday);
-    text_layer_set_text(date_layer, date_text);
+    char month_text[10];
+    strftime(month_text, sizeof(month_text), "%B", tick_time);
+    snprintf(date_text, sizeof(date_text), "%s %i", month_text, tick_time->tm_mday);
+    text_layer_set_text(date_layer, upcase(date_text));
+
+    char day_text_pre[10];
+    strftime(day_text_pre, sizeof(day_text_pre), "%A", tick_time);
+    snprintf(day_text, sizeof(day_text), "%s", day_text_pre);
+    text_layer_set_text(day_layer, upcase(day_text));
   }
 
   // Update the bottom half of the screen: icon and temperature
@@ -82,10 +100,12 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 
       // Figure out if it's day or night. Not the best way to do this but the webservice
       // does not seem to return this info.
+      /*
       bool night_time = false;
       if (tick_time->tm_hour >= 19 || tick_time->tm_hour < 7)
         night_time = true;
-      weather_layer_set_icon(weather_layer, weather_icon_for_condition(weather_data->condition, night_time));
+      */
+      weather_layer_set_condition(weather_layer, weather_data->condition);
     }
   }
 
@@ -106,6 +126,13 @@ static void init(void) {
 
   font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_16));
   font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_48));
+
+  day_layer = text_layer_create(DAY_FRAME);
+  text_layer_set_text_color(day_layer, GColorWhite);
+  text_layer_set_background_color(day_layer, GColorClear);
+  text_layer_set_font(day_layer, font_date);
+  text_layer_set_text_alignment(day_layer, GTextAlignmentCenter);
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(day_layer));
 
   time_layer = text_layer_create(TIME_FRAME);
   text_layer_set_text_color(time_layer, GColorWhite);
@@ -137,6 +164,7 @@ static void deinit(void) {
   tick_timer_service_unsubscribe();
 
   text_layer_destroy(time_layer);
+  text_layer_destroy(day_layer);
   text_layer_destroy(date_layer);
   weather_layer_destroy(weather_layer);
 
