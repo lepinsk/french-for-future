@@ -27,7 +27,7 @@ BitmapLayer *line_layer;
 static char date_text[] = "XXXXXXXXX 00";
 static char day_text[] = "XXXXXXXXX";
 static char time_text[] = "00:00";
-static char temp_text[] = "XXXX";
+static char temp_text[] = "XXXXX";
 
 /* Preload the fonts */
 GFont font_date;
