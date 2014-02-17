@@ -4,8 +4,8 @@
 #include "config.h"
 #include <ctype.h>
 
-#define DAY_FRAME       (GRect(0, 17, 144, 168-62))
-#define TIME_FRAME      (GRect(0, 33, 144, 168-20))
+#define DAY_FRAME       (GRect(0, 16, 144, 168-62))
+#define TIME_FRAME      (GRect(0, 32, 144, 168-20))
 #define DATE_FRAME      (GRect(0, 90, 144, 168-62))
 #define TEMP_FRAME      (GRect(10, 138, 134, 168-62))
 #define COND_FRAME      (GRect(0, 138, 134, 168-62))
