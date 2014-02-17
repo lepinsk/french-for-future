@@ -80,3 +80,33 @@ function fetchWeather(latitude, longitude) {
     };
     req.send(null);
 }
+
+Pebble.addEventListener("showConfiguration", function(e) {
+    console.log("Showing configuration");
+    Pebble.openURL('http://jtewfik.github.io/myBus/index.html');
+});
+
+Pebble.addEventListener("webviewclosed", function(e) {
+    console.log("Closing configuration");
+    var test = localStorage.getItem("stop_num_list");
+    console.log(test);
+/*
+    //store the settings
+    if (e.response) {
+        var config = JSON.parse(e.response);
+        console.log("Configuration window returned: " + JSON.stringify(config));
+
+        //set the params and log them
+        console.log("Stop Numbers: " + config.stop_num);
+        console.log("Route Numbers: " + config.route_num);
+
+        //store the lists and trigger a reload
+        localStorage.setItem("route_list", config.route_num);
+        localStorage.setItem("stop_num_list", config.stop_num);
+        stop_num_list = config.stop_num;
+        reload();
+    } else {
+        console.log("no response");
+    }
+*/
+});

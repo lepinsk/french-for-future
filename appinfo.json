@@ -14,6 +14,7 @@
     "error": 2,
     "request_update": 42
   },
+  "capabilities": ["location", "configurable"],
   "resources": {
     "media": [
       {
