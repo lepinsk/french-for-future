@@ -2,23 +2,25 @@
 
 #define KEY_TEMPERATURE 0
 #define KEY_CONDITION 1
-#define KEY_ERROR 2
+#define KEY_BTC 2
+#define KEY_ERROR 3
 #define KEY_REQUEST_UPDATE 42
 typedef enum {
-  WEATHER_E_OK = 0,
-  WEATHER_E_DISCONNECTED,
-  WEATHER_E_PHONE,
-  WEATHER_E_NETWORK
-} WeatherError;
+  UPDATE_E_OK = 0,
+  UPDATE_E_DISCONNECTED,
+  UPDATE_E_PHONE,
+  UPDATE_E_NETWORK
+} UpdateError;
 
 typedef struct {
   int temperature;
+  int btc_price;
   int condition;
   time_t updated;
-  WeatherError error;
-} WeatherData;
+  UpdateError error;
+} UpdateData;
 
-void init_network(WeatherData *weather_data);
+void init_update(UpdateData *update_data);
 void close_network();
 
-void request_weather();
+void request_update();
