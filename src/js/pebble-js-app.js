@@ -4,13 +4,13 @@ Pebble.addEventListener("ready", function(e) {
 });
 
 Pebble.addEventListener("appmessage", function(e) {
-    console.log("Got a message - Starting weather request...");
-    updateWeather();
+    console.log("Got a message - Starting update request...");
+    update();
 });
 
 var updateInProgress = false;
 
-function updateWeather() {
+function update() {
     if (!updateInProgress) {
         updateInProgress = true;
         var locationOptions = { "timeout": 15000, "maximumAge": 60000 };
@@ -35,7 +35,23 @@ function locationError(err) {
 
 function fetchWeather(latitude, longitude) {
     var response;
+    var btc_price = 0.0;
     var req = new XMLHttpRequest();
+
+    req.open('GET', "https://cavirtex.com/api/CAD/ticker.json", true);
+    req.onload = function(e) {
+        if (req.readyState == 4) {
+            if(req.status == 200) {
+                console.log(req.responseText);
+                response = JSON.parse(req.responseText);
+                if (response) {
+                    btc_price = response.last*100;
+                }
+            }
+        }
+    }
+
+    req = new XMLHttpRequest();
     req.open('GET', "http://api.openweathermap.org/data/2.5/weather?" +
         "lat=" + latitude + "&lon=" + longitude + "&cnt=1", true);
     req.onload = function(e) {
@@ -65,6 +81,7 @@ function fetchWeather(latitude, longitude) {
                     Pebble.sendAppMessage({
                         "condition": condition,
                         "temperature": temperature,
+                        "btc_price": btc_price,
                         "sunrise": sunrise,
                         "sunset": sunset,
                         "current_time": current_time

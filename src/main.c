@@ -8,16 +8,18 @@
 #define TIME_FRAME      (GRect(0, 33, 144, 168-20))
 #define DATE_FRAME      (GRect(0, 90, 144, 168-62))
 #define TEMP_FRAME      (GRect(10, 138, 134, 168-62))
+#define BTC_FRAME       (GRect(0, 138, 134, 168-62))
 #define COND_FRAME      (GRect(0, 138, 134, 168-62))
 
-/* Keep a pointer to the current weather data as a global variable */
-static WeatherData *weather_data;
+/* Keep a pointer to the current update data as a global variable */
+static UpdateData *update_data;
 
 /* Global variables to keep track of the UI elements */
 static Window *window;
 static TextLayer *date_layer;
 static TextLayer *day_layer;
 static TextLayer *time_layer;
+static TextLayer *btc_layer;
 static TextLayer *temp_layer;
 static TextLayer *cond_layer;
 
@@ -25,9 +27,10 @@ GBitmap *line_bmp;
 BitmapLayer *line_layer;
 
 static char date_text[] = "XXXXXXXXX 00";
-static char day_text[] = "XXXXXXXXX";
+static char day_text[]  = "XXXXXXXXX";
 static char time_text[] = "00:00";
 static char temp_text[] = "XXXXX";
+static char btc_text[]  = "XXXXX";
 
 /* Preload the fonts */
 GFont font_date;
@@ -80,9 +83,9 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 
   // Update the bottom half of the screen: icon and temperature
   static int animation_step = 0;
-  if (weather_data->updated == 0 && weather_data->error == WEATHER_E_OK)
+  if (update_data->updated == 0 && update_data->error == UPDATE_E_OK)
   {
-    // 'Animate' loading icon until the first successful weather request
+    // 'Animate' loading icon until the first successful update request
     if (animation_step == 0) {
       text_layer_set_text(cond_layer, "LOADING  ");
     }
@@ -95,23 +98,28 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
     animation_step = (animation_step + 1) % 3;
   }
   else {
-    // Update the weather icon and temperature
-    if (weather_data->error) {
+    // Update the icon and temperature
+    if (update_data->error) {
       text_layer_set_text(cond_layer, "ERROR");
     }
     else {
       // Show the temperature as 'stale' if it has not been updated in 30 minutes
       bool stale = false;
-      if (weather_data->updated > time(NULL) + 1800) {
+      if (update_data->updated > time(NULL) + 1800) {
         stale = true;
       }
 
       // update the temp layer
-      snprintf(temp_text, sizeof(temp_text), "%i%s", weather_data->temperature, stale ? " " : "°");
+      snprintf(temp_text, sizeof(temp_text), "%i%s", update_data->temperature, stale ? " " : "°");
       text_layer_set_text(temp_layer, temp_text);
       
+      // update btc price
+      snprintf(btc_text, sizeof(btc_text), "%i.%i", 
+               (update_data->btc_price)/100,
+               update_data->btc_price - ((update_data->btc_price)/100)*100);
+      text_layer_set_text(btc_layer, btc_text);
 
-      int c = weather_data->condition;
+      int c = update_data->condition;
       if (c < 300) {
         text_layer_set_text(cond_layer, "STORMY");
       }
@@ -165,10 +173,10 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
     }
   }
 
-  // Refresh the weather info every 15 minutes
+  // Refresh the update info every 15 minutes
   if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 15) == 0)
   {
-    request_weather();
+    request_update();
   }
 }
 
@@ -177,8 +185,8 @@ static void init(void) {
   window_stack_push(window, true /* Animated */);
   window_set_background_color(window, GColorBlack);
 
-  weather_data = malloc(sizeof(WeatherData));
-  init_network(weather_data);
+  update_data = malloc(sizeof(UpdateData));
+  init_network(update_data);
 
   font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_16));
   font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_48));
@@ -211,6 +219,14 @@ static void init(void) {
   text_layer_set_text_alignment(temp_layer, GTextAlignmentLeft);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(temp_layer));
 
+  // (TODO) Currently overwritten by the condition layer
+  btc_layer = text_layer_create(BTC_FRAME);
+  text_layer_set_text_color(btc_layer, GColorWhite);
+  text_layer_set_background_color(btc_layer, GColorClear);
+  text_layer_set_font(btc_layer, font_date);
+  text_layer_set_text_alignment(btc_layer, GTextAlignmentLeft);
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(btc_layer));
+
   cond_layer = text_layer_create(COND_FRAME);
   text_layer_set_text_color(cond_layer, GColorWhite);
   text_layer_set_background_color(cond_layer, GColorClear);
@@ -235,6 +251,7 @@ static void deinit(void) {
   tick_timer_service_unsubscribe();
 
   text_layer_destroy(time_layer);
+  text_layer_destroy(btc_layer);
   text_layer_destroy(day_layer);
   text_layer_destroy(date_layer);
   text_layer_destroy(temp_layer);
@@ -244,7 +261,7 @@ static void deinit(void) {
   fonts_unload_custom_font(font_date);
   fonts_unload_custom_font(font_time);
 
-  free(weather_data);
+  free(update_data);
 }
 
 int main(void) {
