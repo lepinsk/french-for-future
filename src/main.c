@@ -174,13 +174,29 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
   }
 }
 
+static void setColour(bool dark){
+  if (dark){
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "setColour called: dark=true");
+    bg_colour_is_black = true;
+  } else {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "setColour called: dark=false");
+    bg_colour_is_black = false;
+  }
+  window_set_background_color(window, bg_colour_is_black ? GColorBlack : GColorWhite);
+  text_layer_set_text_color(day_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
+  text_layer_set_text_color(time_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
+  text_layer_set_text_color(date_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
+  text_layer_set_text_color(temp_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
+  text_layer_set_text_color(cond_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
+}
+
 static void init(void) {
   window = window_create();
   window_stack_push(window, true /* Animated */);
   window_set_background_color(window, bg_colour_is_black ? GColorBlack : GColorWhite);
 
   weather_data = malloc(sizeof(WeatherData));
-  init_network(weather_data);
+  init_network(weather_data, &setColour);
 
   font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_16));
   font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_48));

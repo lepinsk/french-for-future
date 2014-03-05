@@ -83,13 +83,18 @@ function fetchWeather(latitude, longitude) {
 
 Pebble.addEventListener("showConfiguration", function(e) {
     console.log("Showing configuration");
-    Pebble.openURL('http://jtewfik.github.io/myBus/index.html');
+    Pebble.openURL('http://debaclesoftware.com/fff/index.html');
 });
 
 Pebble.addEventListener("webviewclosed", function(e) {
-    console.log("Closing configuration");
-    var test = localStorage.getItem("stop_num_list");
-    console.log(test);
+    console.log("Closing webview");
+    var JSP = JSON.parse(e.response);
+    var cs = JSP["colourScheme"];
+
+    console.log(cs);
+    Pebble.sendAppMessage({
+    	"colourscheme" : cs
+    });
 /*
     //store the settings
     if (e.response) {
