@@ -3,6 +3,7 @@
 #define KEY_TEMPERATURE 0
 #define KEY_CONDITION 1
 #define KEY_ERROR 2
+#define KEY_COLOURSCHEME 3
 #define KEY_REQUEST_UPDATE 42
 typedef enum {
   WEATHER_E_OK = 0,
@@ -18,7 +19,8 @@ typedef struct {
   WeatherError error;
 } WeatherData;
 
-void init_network(WeatherData *weather_data);
+void (*cbf)(bool);
+void init_network(WeatherData *weather_data, void (*callbackFunction)(bool));
 void close_network();
 
 void request_weather();

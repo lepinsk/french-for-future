@@ -4,8 +4,8 @@
 #include "config.h"
 #include <ctype.h>
 
-#define DAY_FRAME       (GRect(0, 17, 144, 168-62))
-#define TIME_FRAME      (GRect(0, 33, 144, 168-20))
+#define DAY_FRAME       (GRect(0, 16, 144, 168-62))
+#define TIME_FRAME      (GRect(0, 32, 144, 168-20))
 #define DATE_FRAME      (GRect(0, 90, 144, 168-62))
 #define TEMP_FRAME      (GRect(10, 138, 134, 168-62))
 #define COND_FRAME      (GRect(0, 138, 134, 168-62))
@@ -32,6 +32,8 @@ static char temp_text[] = "XXXXX";
 /* Preload the fonts */
 GFont font_date;
 GFont font_time;
+
+bool bg_colour_is_black = true;
 
 char *upcase(char *str)
 {
@@ -172,47 +174,63 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
   }
 }
 
+static void setColour(bool dark){
+  if (dark){
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "setColour called: dark=true");
+    bg_colour_is_black = true;
+  } else {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "setColour called: dark=false");
+    bg_colour_is_black = false;
+  }
+  window_set_background_color(window, bg_colour_is_black ? GColorBlack : GColorWhite);
+  text_layer_set_text_color(day_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
+  text_layer_set_text_color(time_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
+  text_layer_set_text_color(date_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
+  text_layer_set_text_color(temp_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
+  text_layer_set_text_color(cond_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
+}
+
 static void init(void) {
   window = window_create();
   window_stack_push(window, true /* Animated */);
-  window_set_background_color(window, GColorBlack);
+  window_set_background_color(window, bg_colour_is_black ? GColorBlack : GColorWhite);
 
   weather_data = malloc(sizeof(WeatherData));
-  init_network(weather_data);
+  init_network(weather_data, &setColour);
 
   font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_16));
   font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_48));
 
   day_layer = text_layer_create(DAY_FRAME);
-  text_layer_set_text_color(day_layer, GColorWhite);
+  text_layer_set_text_color(day_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_background_color(day_layer, GColorClear);
   text_layer_set_font(day_layer, font_date);
   text_layer_set_text_alignment(day_layer, GTextAlignmentCenter);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(day_layer));
 
   time_layer = text_layer_create(TIME_FRAME);
-  text_layer_set_text_color(time_layer, GColorWhite);
+  text_layer_set_text_color(time_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_background_color(time_layer, GColorClear);
   text_layer_set_font(time_layer, font_time);
   text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(time_layer));
 
   date_layer = text_layer_create(DATE_FRAME);
-  text_layer_set_text_color(date_layer, GColorWhite);
+  text_layer_set_text_color(date_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_background_color(date_layer, GColorClear);
   text_layer_set_font(date_layer, font_date);
   text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(date_layer));
 
   temp_layer = text_layer_create(TEMP_FRAME);
-  text_layer_set_text_color(temp_layer, GColorWhite);
+  text_layer_set_text_color(temp_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_background_color(temp_layer, GColorClear);
   text_layer_set_font(temp_layer, font_date);
   text_layer_set_text_alignment(temp_layer, GTextAlignmentLeft);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(temp_layer));
 
   cond_layer = text_layer_create(COND_FRAME);
-  text_layer_set_text_color(cond_layer, GColorWhite);
+  text_layer_set_text_color(cond_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_background_color(cond_layer, GColorClear);
   text_layer_set_font(cond_layer, font_date);
   text_layer_set_text_alignment(cond_layer, GTextAlignmentRight);

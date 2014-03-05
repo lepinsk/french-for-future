@@ -80,3 +80,38 @@ function fetchWeather(latitude, longitude) {
     };
     req.send(null);
 }
+
+Pebble.addEventListener("showConfiguration", function(e) {
+    console.log("Showing configuration");
+    Pebble.openURL('http://debaclesoftware.com/fff/index.html');
+});
+
+Pebble.addEventListener("webviewclosed", function(e) {
+    console.log("Closing webview");
+    var JSP = JSON.parse(e.response);
+    var cs = JSP["colourScheme"];
+
+    console.log(cs);
+    Pebble.sendAppMessage({
+    	"colourscheme" : cs
+    });
+/*
+    //store the settings
+    if (e.response) {
+        var config = JSON.parse(e.response);
+        console.log("Configuration window returned: " + JSON.stringify(config));
+
+        //set the params and log them
+        console.log("Stop Numbers: " + config.stop_num);
+        console.log("Route Numbers: " + config.route_num);
+
+        //store the lists and trigger a reload
+        localStorage.setItem("route_list", config.route_num);
+        localStorage.setItem("stop_num_list", config.stop_num);
+        stop_num_list = config.stop_num;
+        reload();
+    } else {
+        console.log("no response");
+    }
+*/
+});
