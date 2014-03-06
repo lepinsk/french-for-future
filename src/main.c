@@ -191,8 +191,13 @@ static void setColour(bool dark){
 }
 
 void accel_tap_handler(AccelAxisType axis, int32_t direction) {
-  // Process tap on ACCEL_AXIS_X, ACCEL_AXIS_Y or ACCEL_AXIS_Z
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "accel_tap_handler fired");
+  static time_t lastTapTime = 0;
+  time_t currentTime = time(NULL);
+  if ((currentTime - lastTapTime) < 6) {  // this is our second tap-accel event in <6s
+     BatteryChargeState battState = battery_state_service_peek();
+     APP_LOG(APP_LOG_LEVEL_DEBUG, "battery state: %s; %d%% charged", (battState.is_charging ? "charging" : "not charging"), battState.charge_percent);
+  }
+  lastTapTime = currentTime;
 }
 
 static void init(void) {
@@ -272,7 +277,7 @@ static void deinit(void) {
 
   free(weather_data);
 
-  // Remove the tap watcher
+  // Remove the accel tap watcher
   accel_tap_service_unsubscribe();
 }
 
