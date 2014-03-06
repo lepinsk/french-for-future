@@ -97,73 +97,78 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
     animation_step = (animation_step + 1) % 3;
   }
   else {
-    // Update the weather icon and temperature
-    if (weather_data->error) {
-      text_layer_set_text(cond_layer, "ERROR");
-    }
-    else {
-      // Show the temperature as 'stale' if it has not been updated in 30 minutes
-      bool stale = false;
-      if (weather_data->updated > time(NULL) + 1800) {
-        stale = true;
-      }
+    static time_t last_updated_weather = -1;
 
-      // update the temp layer
-      snprintf(temp_text, sizeof(temp_text), "%i%s", weather_data->temperature, stale ? " " : "°");
-      text_layer_set_text(temp_layer, temp_text);
-      
-
-      int c = weather_data->condition;
-      if (c < 300) {
-        text_layer_set_text(cond_layer, "STORMY");
-      }
-      // Drizzle
-      else if (c < 500) {
-        text_layer_set_text(cond_layer, "DRIZZLE");
-      }
-      // Rain / Freezing rain / Shower rain
-      else if (c < 600) {
-        text_layer_set_text(cond_layer, "RAINY");
-      }
-      // Snow
-      else if (c < 700) {
-        text_layer_set_text(cond_layer, "SNOWY");
-      }
-      // Fog / Mist / Haze / etc.
-      else if (c < 771) {
-        text_layer_set_text(cond_layer, "FOGGY");
-      }
-      // Tornado / Squalls
-      else if (c < 800) {
-        text_layer_set_text(cond_layer, "WINDY");
-      }
-      // Sky is clear
-      else if (c == 800) {
-        text_layer_set_text(cond_layer, "CLEAR");
-      }
-      // few/scattered/broken clouds
-      else if (c < 804) {
-        text_layer_set_text(cond_layer, "P.CLOUDY");
-      }
-      // overcast clouds
-      else if (c == 804) {
-        text_layer_set_text(cond_layer, "CLOUDY");
-      }
-      // Extreme
-      else if ((c >= 900 && c < 903) || (c > 904 && c < 1000)) {
-        text_layer_set_text(cond_layer, "WINDY");
-      }
-      // Cold
-      else if (c == 903) {
-        text_layer_set_text(cond_layer, "COLD");
-      }
-      // Hot
-      else if (c == 904) {
-        text_layer_set_text(cond_layer, "HOT");
+    if (weather_data->updated != last_updated_weather) {
+      // Update the weather icon and temperature
+      if (weather_data->error) {
+        text_layer_set_text(cond_layer, "ERROR");
       }
       else {
-        text_layer_set_text(cond_layer, "HMM");
+        // Show the temperature as 'stale' if it has not been updated in 30 minutes
+        bool stale = false;
+        if (weather_data->updated > time(NULL) + 1800) {
+          stale = true;
+        }
+
+        // update the temp layer
+        snprintf(temp_text, sizeof(temp_text), "%i%s", weather_data->temperature, stale ? " " : "°");
+        text_layer_set_text(temp_layer, temp_text);
+        
+
+        int c = weather_data->condition;
+        if (c < 300) {
+          text_layer_set_text(cond_layer, "STORMY");
+        }
+        // Drizzle
+        else if (c < 500) {
+          text_layer_set_text(cond_layer, "DRIZZLE");
+        }
+        // Rain / Freezing rain / Shower rain
+        else if (c < 600) {
+          text_layer_set_text(cond_layer, "RAINY");
+        }
+        // Snow
+        else if (c < 700) {
+          text_layer_set_text(cond_layer, "SNOWY");
+        }
+        // Fog / Mist / Haze / etc.
+        else if (c < 771) {
+          text_layer_set_text(cond_layer, "FOGGY");
+        }
+        // Tornado / Squalls
+        else if (c < 800) {
+          text_layer_set_text(cond_layer, "WINDY");
+        }
+        // Sky is clear
+        else if (c == 800) {
+          text_layer_set_text(cond_layer, "CLEAR");
+        }
+        // few/scattered/broken clouds
+        else if (c < 804) {
+          text_layer_set_text(cond_layer, "P.CLOUDY");
+        }
+        // overcast clouds
+        else if (c == 804) {
+          text_layer_set_text(cond_layer, "CLOUDY");
+        }
+        // Extreme
+        else if ((c >= 900 && c < 903) || (c > 904 && c < 1000)) {
+          text_layer_set_text(cond_layer, "WINDY");
+        }
+        // Cold
+        else if (c == 903) {
+          text_layer_set_text(cond_layer, "COLD");
+        }
+        // Hot
+        else if (c == 904) {
+          text_layer_set_text(cond_layer, "HOT");
+        }
+        else {
+          text_layer_set_text(cond_layer, "HMM");
+        }
       }
+      last_updated_weather = weather_data->updated;
     }
   }
 
