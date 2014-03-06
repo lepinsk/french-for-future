@@ -1,3 +1,6 @@
+var temperatureOverride = false;
+var temperatureInC = true;
+
 Pebble.addEventListener("ready", function(e) {
     console.log("Starting ...");
     updateWeather();
@@ -47,13 +50,20 @@ function fetchWeather(latitude, longitude) {
                 var current_time = Date.now() / 1000;
                 if (response) {
                     var tempResult = response.main.temp;
-                    if (response.sys.country === "US") {
-                        // Convert temperature to Fahrenheit if user is within the US
-                        temperature = Math.round(((tempResult - 273.15) * 1.8) + 32);
-                    }
-                    else {
-                        // Otherwise, convert temperature to Celsius
-                        temperature = Math.round(tempResult - 273.15);
+                    if (!temperatureOverride){
+                        if (response.sys.country === "US") {
+                            // Convert temperature to Fahrenheit if user is within the US
+                            temperature = Math.round(((tempResult - 273.15) * 1.8) + 32);
+                        } else {
+                            // Otherwise, convert temperature to Celsius
+                            temperature = Math.round(tempResult - 273.15);
+                        }
+                    } else {
+                        if (!temperatureInC) {
+                            temperature = Math.round(((tempResult - 273.15) * 1.8) + 32);
+                        } else {
+                            temperature = Math.round(tempResult - 273.15);
+                        }
                     }		 
                     condition = response.weather[0].id;
                     sunrise = response.sys.sunrise;
