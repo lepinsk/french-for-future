@@ -34,6 +34,7 @@ GFont font_date;
 GFont font_time;
 
 bool bg_colour_is_black = true;
+bool currently_displaying_batt = false;
 
 char *upcase(char *str)
 {
@@ -111,58 +112,59 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
       // update the temp layer
       snprintf(temp_text, sizeof(temp_text), "%i%s", weather_data->temperature, stale ? " " : "°");
       text_layer_set_text(temp_layer, temp_text);
-      
 
-      int c = weather_data->condition;
-      if (c < 300) {
-        text_layer_set_text(cond_layer, "STORMY");
-      }
-      // Drizzle
-      else if (c < 500) {
-        text_layer_set_text(cond_layer, "DRIZZLE");
-      }
-      // Rain / Freezing rain / Shower rain
-      else if (c < 600) {
-        text_layer_set_text(cond_layer, "RAINY");
-      }
-      // Snow
-      else if (c < 700) {
-        text_layer_set_text(cond_layer, "SNOWY");
-      }
-      // Fog / Mist / Haze / etc.
-      else if (c < 771) {
-        text_layer_set_text(cond_layer, "FOGGY");
-      }
-      // Tornado / Squalls
-      else if (c < 800) {
-        text_layer_set_text(cond_layer, "WINDY");
-      }
-      // Sky is clear
-      else if (c == 800) {
-        text_layer_set_text(cond_layer, "CLEAR");
-      }
-      // few/scattered/broken clouds
-      else if (c < 804) {
-        text_layer_set_text(cond_layer, "P.CLOUDY");
-      }
-      // overcast clouds
-      else if (c == 804) {
-        text_layer_set_text(cond_layer, "CLOUDY");
-      }
-      // Extreme
-      else if ((c >= 900 && c < 903) || (c > 904 && c < 1000)) {
-        text_layer_set_text(cond_layer, "WINDY");
-      }
-      // Cold
-      else if (c == 903) {
-        text_layer_set_text(cond_layer, "COLD");
-      }
-      // Hot
-      else if (c == 904) {
-        text_layer_set_text(cond_layer, "HOT");
-      }
-      else {
-        text_layer_set_text(cond_layer, "HMM");
+      if (!currently_displaying_batt){
+        int c = weather_data->condition;
+        if (c < 300) {
+          text_layer_set_text(cond_layer, "STORMY");
+        }
+        // Drizzle
+        else if (c < 500) {
+          text_layer_set_text(cond_layer, "DRIZZLE");
+        }
+        // Rain / Freezing rain / Shower rain
+        else if (c < 600) {
+          text_layer_set_text(cond_layer, "RAINY");
+        }
+        // Snow
+        else if (c < 700) {
+          text_layer_set_text(cond_layer, "SNOWY");
+        }
+        // Fog / Mist / Haze / etc.
+        else if (c < 771) {
+          text_layer_set_text(cond_layer, "FOGGY");
+        }
+        // Tornado / Squalls
+        else if (c < 800) {
+          text_layer_set_text(cond_layer, "WINDY");
+        }
+        // Sky is clear
+        else if (c == 800) {
+          text_layer_set_text(cond_layer, "CLEAR");
+        }
+        // few/scattered/broken clouds
+        else if (c < 804) {
+          text_layer_set_text(cond_layer, "P.CLOUDY");
+        }
+        // overcast clouds
+        else if (c == 804) {
+          text_layer_set_text(cond_layer, "CLOUDY");
+        }
+        // Extreme
+        else if ((c >= 900 && c < 903) || (c > 904 && c < 1000)) {
+          text_layer_set_text(cond_layer, "WINDY");
+        }
+        // Cold
+        else if (c == 903) {
+          text_layer_set_text(cond_layer, "COLD");
+        }
+        // Hot
+        else if (c == 904) {
+          text_layer_set_text(cond_layer, "HOT");
+        }
+        else {
+          text_layer_set_text(cond_layer, "HMM");
+        }
       }
     }
   }
@@ -190,12 +192,20 @@ static void setColour(bool dark){
   text_layer_set_text_color(cond_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
 }
 
+void handleTimer(void *data){
+  currently_displaying_batt = false;
+}
+
 void accel_tap_handler(AccelAxisType axis, int32_t direction) {
   static time_t lastTapTime = 0;
   time_t currentTime = time(NULL);
   if ((currentTime - lastTapTime) < 6) {  // this is our second tap-accel event in <6s
      BatteryChargeState battState = battery_state_service_peek();
-     APP_LOG(APP_LOG_LEVEL_DEBUG, "battery state: %s; %d%% charged", (battState.is_charging ? "charging" : "not charging"), battState.charge_percent);
+     static char battery_text[] = "BATT: 100%";
+     snprintf(battery_text, sizeof(battery_text), "BATT: %d%%", battState.charge_percent);
+     currently_displaying_batt = true;
+     text_layer_set_text(cond_layer, battery_text);
+     app_timer_register(5000, handleTimer, NULL);
   }
   lastTapTime = currentTime;
 }
