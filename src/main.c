@@ -190,6 +190,11 @@ static void setColour(bool dark){
   text_layer_set_text_color(cond_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
 }
 
+void accel_tap_handler(AccelAxisType axis, int32_t direction) {
+  // Process tap on ACCEL_AXIS_X, ACCEL_AXIS_Y or ACCEL_AXIS_Z
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "accel_tap_handler fired");
+}
+
 static void init(void) {
   window = window_create();
   window_stack_push(window, true /* Animated */);
@@ -246,6 +251,9 @@ static void init(void) {
   handle_tick(localtime(&now), SECOND_UNIT | MINUTE_UNIT | HOUR_UNIT | DAY_UNIT );
   // And then every second
   tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
+
+  // Add an accel tap watcher
+  accel_tap_service_subscribe(&accel_tap_handler);
 }
 
 static void deinit(void) {
@@ -263,6 +271,9 @@ static void deinit(void) {
   fonts_unload_custom_font(font_time);
 
   free(weather_data);
+
+  // Remove the tap watcher
+  accel_tap_service_unsubscribe();
 }
 
 int main(void) {
