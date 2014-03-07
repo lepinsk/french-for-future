@@ -33,6 +33,7 @@ GFont font_date;
 GFont font_time;
 
 bool bg_colour_is_black = true;
+bool just_launched = true;
 
 char *upcase(char *str) {
     char *s = str;
@@ -90,6 +91,16 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     }
     animation_step = (animation_step + 1) % 3;
   } else {
+    if (just_launched){
+      // on first launch we're refreshing every second to load up
+      // after that, switch to once a minute for all future updates...
+      just_launched = false;
+
+      tick_timer_service_unsubscribe();
+      tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
+    }
+
+
     static time_t last_updated_weather = -1;
 
     if (weather_data->updated != last_updated_weather) {
