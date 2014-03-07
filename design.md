@@ -3,7 +3,7 @@ French for Future - Design
 ![Mockup](https://raw.github.com/lepinsk/akaoka-sans/master/Mockup.png)
 
 Font: 
-* Avenir Book, small text is 16; clock numbers are 48
+* Avenir Book, small text is 18; clock numbers are 48
 
 Layout details (the pebble has a 144 x 168 pixel display):
 * the date and time are centered text
