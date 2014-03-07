@@ -14,15 +14,15 @@
 
 static WeatherData *weather_data;
 
-static Window *window;
-static TextLayer *date_layer;
-static TextLayer *day_layer;
-static TextLayer *time_layer;
-static TextLayer *temp_layer;
-static TextLayer *cond_layer;
+static Window     *window;
+static TextLayer  *date_layer;
+static TextLayer  *day_layer;
+static TextLayer  *time_layer;
+static TextLayer  *temp_layer;
+static TextLayer  *cond_layer;
 
-GBitmap *line_bmp;
-BitmapLayer *line_layer;
+GBitmap           *line_bmp;
+BitmapLayer       *line_layer;
 
 static char date_text[]   = "XXXXXXXXX 00";
 static char day_text[]    = "XXXXXXXXX";
@@ -36,14 +36,16 @@ bool bg_colour_is_black = true;
 bool just_launched = true;
 bool currently_displaying_batt = false;
 
+// returns an uppercased version of a char array
 char *upcase(char *str) {
-    char *s = str;
-    while (*s) {
-        *s++ = toupper((int)*s);
-    }
-    return str;
+  char *s = str;
+  while (*s) {
+    *s++ = toupper((int)*s);
+  }
+  return str;
 }
 
+// loads the appropriate weather string into cond_layer
 static void display_weather_condition(){
   int c = weather_data->condition;
   if (c < 300) {
@@ -75,6 +77,8 @@ static void display_weather_condition(){
   }
 }
 
+// called every 1s initially, then every 60s; this is our runloop
+// displays time/date info, as well as weather; requests weather %15min
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
   if (units_changed & MINUTE_UNIT) {
     // Update the time - Fix to deal with 12 / 24 centering bug
@@ -83,9 +87,9 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
 
     // Manually format the time as 12 / 24 hour, as specified
     strftime(   time_text, 
-                sizeof(time_text), 
-                clock_is_24h_style() ? "%R" : "%I:%M", 
-                currentLocalTime);
+      sizeof(time_text), 
+      clock_is_24h_style() ? "%R" : "%I:%M", 
+      currentLocalTime);
 
     // Drop the first char of time_text if needed
     if (!clock_is_24h_style() && (time_text[0] == '0')) {
@@ -107,32 +111,25 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     text_layer_set_text(day_layer, upcase(day_text));
 
     text_layer_set_text(temp_layer, "");
-    text_layer_set_text(cond_layer, "LOADING  ");
+    text_layer_set_text(cond_layer, "LOADING ");
   }
 
   // Update the bottom half of the screen: icon and temperature
-  static int animation_step = 0;
   if (weather_data->updated == 0 && weather_data->error == WEATHER_E_OK) {
-    // 'Animate' loading icon until the first successful weather request
+    static int animation_step = 0;
     if (animation_step == 0) {
-      text_layer_set_text(cond_layer, "LOADING  ");
-    } else if (animation_step == 1) {
       text_layer_set_text(cond_layer, "LOADING ");
-    } else if (animation_step >= 2) {
-      text_layer_set_text(cond_layer, "LOADING");
+    } else {
+      text_layer_set_text(cond_layer, "LOADING.");
     }
-    animation_step = (animation_step + 1) % 3;
+    animation_step = (animation_step + 1) % 2;
   } else {
-    if (just_launched){
-      // on first launch we're refreshing every second to load up
-      // after that, switch to once a minute for all future updates...
+    if (just_launched){       // after first launch, switch to once a minute for all future updates...
       just_launched = false;
 
       tick_timer_service_unsubscribe();
       tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
     }
-
-
     static time_t last_updated_weather = -1;
 
     if (weather_data->updated != last_updated_weather) {
@@ -166,10 +163,8 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
 
 static void setColour(bool dark) {
   if (dark){
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "setColour called: dark=true");
     bg_colour_is_black = true;
   } else {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "setColour called: dark=false");
     bg_colour_is_black = false;
   }
   window_set_background_color(window,   bg_colour_is_black ? GColorBlack : GColorWhite);
@@ -189,14 +184,14 @@ void accel_tap_handler(AccelAxisType axis, int32_t direction) {
   static time_t lastTapTime = 0;
   time_t currentTime = time(NULL);
   if ((currentTime - lastTapTime) < 6) {  // this is our second tap-accel event in <6s
-     BatteryChargeState battState = battery_state_service_peek();
-     static char battery_text[] = "BATT: 100%";
-     snprintf(battery_text, sizeof(battery_text), "BATT: %d%%", battState.charge_percent);
-     currently_displaying_batt = true;
-     text_layer_set_text(cond_layer, battery_text);
-     app_timer_register(5000, handleTimer, NULL);
-  }
-  lastTapTime = currentTime;
+   BatteryChargeState battState = battery_state_service_peek();
+   static char battery_text[] = "BATT: 100%";
+   snprintf(battery_text, sizeof(battery_text), "BATT: %d%%", battState.charge_percent);
+   currently_displaying_batt = true;
+   text_layer_set_text(cond_layer, battery_text);
+   app_timer_register(5000, handleTimer, NULL);
+ }
+ lastTapTime = currentTime;
 }
 
 static void init(void) {
