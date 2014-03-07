@@ -13,6 +13,7 @@
     "condition": 1,
     "error": 2,
     "colourscheme": 3,
+    "bitcoin": 4,
     "request_update": 42
   },
   "capabilities": ["location", "configurable"],

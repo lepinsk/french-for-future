@@ -18,6 +18,7 @@ static void appmsg_in_received(DictionaryIterator *received, void *context) {
   Tuple *condition_tuple = dict_find(received, KEY_CONDITION);
   Tuple *error_tuple = dict_find(received, KEY_ERROR);
   Tuple *colourscheme_tuple = dict_find(received, KEY_COLOURSCHEME);
+  Tuple *bitcoin_tuple = dict_find(received, KEY_BITCOIN);
 
   if (temperature_tuple && condition_tuple) {
     weather->temperature = temperature_tuple->value->int32;
@@ -25,6 +26,9 @@ static void appmsg_in_received(DictionaryIterator *received, void *context) {
     weather->error = WEATHER_E_OK;
     weather->updated = time(NULL);
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Got temperature %i and condition %i", weather->temperature, weather->condition);
+  } else if (bitcoin_tuple){
+    weather->bitcoin = bitcoin_tuple->value->int32;
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Got bitcoin %i", weather->bitcoin);
   } else if (error_tuple) {
     weather->error = WEATHER_E_NETWORK;
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Got error %s", error_tuple->value->cstring);

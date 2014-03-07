@@ -12,11 +12,13 @@ var temperatureInC = true;
 Pebble.addEventListener("ready", function(e) {
     console.log("Starting ...");
     updateWeather();
+    updateBitcoin();
 });
 
 Pebble.addEventListener("appmessage", function(e) {
     console.log("Got a message - Starting weather request...");
     updateWeather();
+    updateBitcoin();
 });
 
 var updateInProgress = false;
@@ -42,6 +44,38 @@ function locationError(err) {
     console.warn('Location error (' + err.code + '): ' + err.message);
     Pebble.sendAppMessage({ "error": "Loc unavailable" });
     updateInProgress = false;
+}
+
+function updateBitcoin(){
+    console.log("updateBitcoin: updating bitcoin price...");
+    var response;
+    var req = new XMLHttpRequest();
+    console.log("updateBitcoin: making request");
+    req.open('GET', "https://cavirtex.com/api/CAD/ticker.json", true);
+    req.onload = function(e) {
+        console.log("updateBitcoin: onload");
+        if (req.readyState == 4) {
+            if(req.status == 200) {
+                console.log(req.responseText);
+                response = JSON.parse(req.responseText);
+                var btc_price;
+                if (response) {
+                    btc_price = response.last;
+                    console.log("Bitcoin: " + btc_price);
+
+                    Pebble.sendAppMessage({
+                        "bitcoin": btc_price
+                    });
+                    updateInProgress = false;
+                }
+            } else {
+                console.log("updateBitcoin: Error");
+                updateInProgress = false;
+                Pebble.sendAppMessage({ "error": "HTTP Error" });
+            }
+        }
+    };
+    req.send(null);
 }
 
 function fetchWeather(latitude, longitude) {
@@ -79,7 +113,7 @@ function fetchWeather(latitude, longitude) {
 
                     console.log("Temperature: " + temperature + " Condition: " + condition + " Sunrise: " + sunrise +
                               " Sunset: " + sunset + " Now: " + Date.now() / 1000);
-                              
+
                     Pebble.sendAppMessage({
                         "condition": condition,
                         "temperature": temperature,

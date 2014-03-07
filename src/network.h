@@ -13,6 +13,7 @@
 #define KEY_CONDITION 1
 #define KEY_ERROR 2
 #define KEY_COLOURSCHEME 3
+#define KEY_BITCOIN 4
 #define KEY_REQUEST_UPDATE 42
 
 typedef enum {
@@ -26,6 +27,7 @@ typedef struct {
   int temperature;
   int condition;
   time_t updated;
+  int bitcoin;
   WeatherError error;
 } WeatherData;
 
