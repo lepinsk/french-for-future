@@ -8,7 +8,7 @@
 
 #include <pebble.h>
 
-// these are our dictionary keys – correspond to stuff in appinfo.json
+// these are our dictionary keys – they all correspond to stuff in appinfo.json
 #define KEY_TEMPERATURE 0
 #define KEY_CONDITION 1
 #define KEY_ERROR 2

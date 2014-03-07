@@ -32,7 +32,6 @@ static char temp_text[]   = "XXXXX";
 GFont font_date;
 GFont font_time;
 
-bool bg_colour_is_black = true;
 bool just_launched = true;
 bool currently_displaying_batt = false;
 
@@ -77,29 +76,25 @@ static void display_weather_condition(){
   }
 }
 
-// called every 1s initially, then every 60s; this is our runloop
+// called every 1s initially, then every 60s
 // displays time/date info, as well as weather; requests weather %15min
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
-  if (units_changed & MINUTE_UNIT) {
-    // Update the time - Fix to deal with 12 / 24 centering bug
+  if (units_changed & MINUTE_UNIT) {                                                  // Update the time
     time_t currentTime = time(0);
     struct tm *currentLocalTime = localtime(&currentTime);
 
-    // Manually format the time as 12 / 24 hour, as specified
-    strftime(   time_text, 
-      sizeof(time_text), 
-      clock_is_24h_style() ? "%R" : "%I:%M", 
-      currentLocalTime);
+    strftime(   time_text,                                                            // Manually format the time as 12 / 24 hour, as specified
+                sizeof(time_text), 
+                clock_is_24h_style() ? "%R" : "%I:%M", 
+                currentLocalTime);
 
-    // Drop the first char of time_text if needed
-    if (!clock_is_24h_style() && (time_text[0] == '0')) {
+    if (!clock_is_24h_style() && (time_text[0] == '0')) {                             // Drop the first char of time_text if needed
       memmove(time_text, &time_text[1], sizeof(time_text) - 1);
     }
 
     text_layer_set_text(time_layer, time_text);
   }
-  if (units_changed & DAY_UNIT) {
-    // Update the date - Without a leading 0 on the day of the month
+  if (units_changed & DAY_UNIT) {                                                     // Update the date - Without a leading 0 on the day of the month
     char month_text[10];
     strftime(month_text, sizeof(month_text), "%B", tick_time);
     snprintf(date_text, sizeof(date_text), "%s %i", month_text, tick_time->tm_mday);
@@ -114,7 +109,6 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     text_layer_set_text(cond_layer, "LOADING ");
   }
 
-  // Update the bottom half of the screen: icon and temperature
   if (weather_data->updated == 0 && weather_data->error == WEATHER_E_OK) {
     static int animation_step = 0;
     if (animation_step == 0) {
@@ -124,7 +118,7 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     }
     animation_step = (animation_step + 1) % 2;
   } else {
-    if (just_launched){       // after first launch, switch to once a minute for all future updates...
+    if (just_launched){                                                             // after first launch, switch to once a minute for all future updates...
       just_launched = false;
 
       tick_timer_service_unsubscribe();
@@ -133,18 +127,10 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     static time_t last_updated_weather = -1;
 
     if (weather_data->updated != last_updated_weather) {
-      // Update the weather icon and temperature
       if (weather_data->error) {
         text_layer_set_text(cond_layer, "ERROR");
       } else {
-        // Show the temperature as 'stale' if it has not been updated in 30 minutes
-        bool stale = false;
-        if (weather_data->updated > time(NULL) + 1800) {
-          stale = true;
-        }
-
-        // update the temp layer
-        snprintf(temp_text, sizeof(temp_text), "%i%s", weather_data->temperature, stale ? " " : "°");
+        snprintf(temp_text, sizeof(temp_text), "%i%s", weather_data->temperature, "°");
         text_layer_set_text(temp_layer, temp_text);
         
         if (!currently_displaying_batt){
@@ -155,18 +141,17 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     }
   }
 
-  // Refresh the weather info every 15 minutes
-  if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 15) == 0) {
+  if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 15) == 0) {             // Refresh the weather info every 15 minutes
     request_weather();
   }
 }
 
-static void setColour(bool dark) {
+static void set_colour(bool dark) {
+  bool bg_colour_is_black = false;
   if (dark){
     bg_colour_is_black = true;
-  } else {
-    bg_colour_is_black = false;
   }
+
   window_set_background_color(window,   bg_colour_is_black ? GColorBlack : GColorWhite);
   text_layer_set_text_color(day_layer,  bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_text_color(time_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
@@ -175,84 +160,76 @@ static void setColour(bool dark) {
   text_layer_set_text_color(cond_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
 }
 
-void handleTimer(void *data){
+void handle_timer(void *data){
   currently_displaying_batt = false;
   display_weather_condition();
 }
 
 void accel_tap_handler(AccelAxisType axis, int32_t direction) {
   static time_t lastTapTime = 0;
-  time_t currentTime = time(NULL);
-  if ((currentTime - lastTapTime) < 6) {  // this is our second tap-accel event in <6s
+  if ((time(NULL) - lastTapTime) < 6) {                                           // this is our second tap-accel event in <6s
    BatteryChargeState battState = battery_state_service_peek();
    static char battery_text[] = "BATT: 100%";
    snprintf(battery_text, sizeof(battery_text), "BATT: %d%%", battState.charge_percent);
    currently_displaying_batt = true;
    text_layer_set_text(cond_layer, battery_text);
-   app_timer_register(5000, handleTimer, NULL);
+   app_timer_register(5000, handle_timer, NULL);
  }
- lastTapTime = currentTime;
+ lastTapTime = time(NULL);
 }
 
 static void init(void) {
   window = window_create();
-  window_stack_push(window, true /* Animated */);
-  window_set_background_color(window, bg_colour_is_black ? GColorBlack : GColorWhite);
+  window_stack_push(window, true);                                                // true= animated woo
 
   weather_data = malloc(sizeof(WeatherData));
-  init_network(weather_data, &setColour);
+  init_network(weather_data, &set_colour);
 
   font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_18));
   font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_48));
 
   day_layer = text_layer_create(DAY_FRAME);
-  text_layer_set_text_color(day_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_background_color(day_layer, GColorClear);
   text_layer_set_font(day_layer, font_date);
   text_layer_set_text_alignment(day_layer, GTextAlignmentCenter);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(day_layer));
 
   time_layer = text_layer_create(TIME_FRAME);
-  text_layer_set_text_color(time_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_background_color(time_layer, GColorClear);
   text_layer_set_font(time_layer, font_time);
   text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(time_layer));
 
   date_layer = text_layer_create(DATE_FRAME);
-  text_layer_set_text_color(date_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_background_color(date_layer, GColorClear);
   text_layer_set_font(date_layer, font_date);
   text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(date_layer));
 
   temp_layer = text_layer_create(TEMP_FRAME);
-  text_layer_set_text_color(temp_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_background_color(temp_layer, GColorClear);
   text_layer_set_font(temp_layer, font_date);
   text_layer_set_text_alignment(temp_layer, GTextAlignmentLeft);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(temp_layer));
 
   cond_layer = text_layer_create(COND_FRAME);
-  text_layer_set_text_color(cond_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_background_color(cond_layer, GColorClear);
   text_layer_set_font(cond_layer, font_date);
   text_layer_set_text_alignment(cond_layer, GTextAlignmentRight);
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(cond_layer));
 
-  GBitmap *new_icon =  gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DOTS);
+  GBitmap *new_icon = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DOTS);
   line_layer = bitmap_layer_create(GRect(8, 126, 128, 1));
   bitmap_layer_set_bitmap(line_layer, new_icon);
   layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(line_layer));
 
-  // Update the screen right away
-  time_t now = time(NULL);
-  handle_tick(localtime(&now), SECOND_UNIT | MINUTE_UNIT | HOUR_UNIT | DAY_UNIT );
-  // And then every second
-  tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
+  set_colour(true);
 
-  // Add an accel tap watcher
-  accel_tap_service_subscribe(&accel_tap_handler);
+  time_t now = time(NULL);
+  handle_tick(localtime(&now), SECOND_UNIT | MINUTE_UNIT | HOUR_UNIT | DAY_UNIT );      // Update the screen right away
+  tick_timer_service_subscribe(SECOND_UNIT, handle_tick);                               // And then every second
+
+  accel_tap_service_subscribe(&accel_tap_handler);                                      // Add an accel tap watcher
 }
 
 static void deinit(void) {
