@@ -4,16 +4,14 @@
 #include "config.h"
 #include <ctype.h>
 
-#define DAY_FRAME       (GRect(0, 16, 144, 168-62))
-#define TIME_FRAME      (GRect(0, 32, 144, 168-20))
-#define DATE_FRAME      (GRect(0, 90, 144, 168-62))
-#define TEMP_FRAME      (GRect(10, 134, 134, 168-62))
-#define COND_FRAME      (GRect(0, 134, 134, 168-62))
+#define DAY_FRAME       (GRect(0,   16,   144, 168-62))
+#define TIME_FRAME      (GRect(0,   32,   144, 168-20))
+#define DATE_FRAME      (GRect(0,   90,   144, 168-62))
+#define TEMP_FRAME      (GRect(10,  135,  134, 168-62))
+#define COND_FRAME      (GRect(0,   135,  134, 168-62))
 
-/* Keep a pointer to the current weather data as a global variable */
 static WeatherData *weather_data;
 
-/* Global variables to keep track of the UI elements */
 static Window *window;
 static TextLayer *date_layer;
 static TextLayer *day_layer;
@@ -29,14 +27,12 @@ static char day_text[] = "XXXXXXXXX";
 static char time_text[] = "00:00";
 static char temp_text[] = "XXXXX";
 
-/* Preload the fonts */
 GFont font_date;
 GFont font_time;
 
 bool bg_colour_is_black = true;
 
-char *upcase(char *str)
-{
+char *upcase(char *str) {
     char *s = str;
     while (*s) {
         *s++ = toupper((int)*s);
@@ -44,8 +40,7 @@ char *upcase(char *str)
     return str;
 }
 
-static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
-{
+static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
   if (units_changed & MINUTE_UNIT) {
     // Update the time - Fix to deal with 12 / 24 centering bug
     time_t currentTime = time(0);
@@ -82,29 +77,24 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
 
   // Update the bottom half of the screen: icon and temperature
   static int animation_step = 0;
-  if (weather_data->updated == 0 && weather_data->error == WEATHER_E_OK)
-  {
+  if (weather_data->updated == 0 && weather_data->error == WEATHER_E_OK) {
     // 'Animate' loading icon until the first successful weather request
     if (animation_step == 0) {
       text_layer_set_text(cond_layer, "LOADING  ");
-    }
-    else if (animation_step == 1) {
+    } else if (animation_step == 1) {
       text_layer_set_text(cond_layer, "LOADING ");
-    }
-    else if (animation_step >= 2) {
+    } else if (animation_step >= 2) {
       text_layer_set_text(cond_layer, "LOADING");
     }
     animation_step = (animation_step + 1) % 3;
-  }
-  else {
+  } else {
     static time_t last_updated_weather = -1;
 
     if (weather_data->updated != last_updated_weather) {
       // Update the weather icon and temperature
       if (weather_data->error) {
         text_layer_set_text(cond_layer, "ERROR");
-      }
-      else {
+      } else {
         // Show the temperature as 'stale' if it has not been updated in 30 minutes
         bool stale = false;
         if (weather_data->updated > time(NULL) + 1800) {
@@ -119,52 +109,29 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
         int c = weather_data->condition;
         if (c < 300) {
           text_layer_set_text(cond_layer, "STORMY");
-        }
-        // Drizzle
-        else if (c < 500) {
+        } else if (c < 500) {
           text_layer_set_text(cond_layer, "DRIZZLE");
-        }
-        // Rain / Freezing rain / Shower rain
-        else if (c < 600) {
+        } else if (c < 600) {
           text_layer_set_text(cond_layer, "RAINY");
-        }
-        // Snow
-        else if (c < 700) {
+        } else if (c < 700) {
           text_layer_set_text(cond_layer, "SNOWY");
-        }
-        // Fog / Mist / Haze / etc.
-        else if (c < 771) {
+        } else if (c < 771) {
           text_layer_set_text(cond_layer, "FOGGY");
-        }
-        // Tornado / Squalls
-        else if (c < 800) {
+        } else if (c < 800) {
           text_layer_set_text(cond_layer, "WINDY");
-        }
-        // Sky is clear
-        else if (c == 800) {
+        } else if (c == 800) {
           text_layer_set_text(cond_layer, "CLEAR");
-        }
-        // few/scattered/broken clouds
-        else if (c < 804) {
+        } else if (c < 804) {
           text_layer_set_text(cond_layer, "P.CLOUDY");
-        }
-        // overcast clouds
-        else if (c == 804) {
+        } else if (c == 804) {
           text_layer_set_text(cond_layer, "CLOUDY");
-        }
-        // Extreme
-        else if ((c >= 900 && c < 903) || (c > 904 && c < 1000)) {
+        } else if ((c >= 900 && c < 903) || (c > 904 && c < 1000)) {
           text_layer_set_text(cond_layer, "WINDY");
-        }
-        // Cold
-        else if (c == 903) {
+        } else if (c == 903) {
           text_layer_set_text(cond_layer, "COLD");
-        }
-        // Hot
-        else if (c == 904) {
+        } else if (c == 904) {
           text_layer_set_text(cond_layer, "HOT");
-        }
-        else {
+        } else {
           text_layer_set_text(cond_layer, "HMM");
         }
       }
@@ -173,13 +140,12 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed)
   }
 
   // Refresh the weather info every 15 minutes
-  if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 15) == 0)
-  {
+  if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 15) == 0) {
     request_weather();
   }
 }
 
-static void setColour(bool dark){
+static void setColour(bool dark) {
   if (dark){
     APP_LOG(APP_LOG_LEVEL_DEBUG, "setColour called: dark=true");
     bg_colour_is_black = true;
