@@ -34,6 +34,7 @@ GFont font_time;
 
 bool bg_colour_is_black = true;
 bool just_launched = true;
+bool currently_displaying_batt = false;
 
 char *upcase(char *str) {
     char *s = str;
@@ -41,6 +42,37 @@ char *upcase(char *str) {
         *s++ = toupper((int)*s);
     }
     return str;
+}
+
+static void display_weather_condition(){
+  int c = weather_data->condition;
+  if (c < 300) {
+    text_layer_set_text(cond_layer, "STORMY");
+  } else if (c < 500) {
+    text_layer_set_text(cond_layer, "DRIZZLE");
+  } else if (c < 600) {
+    text_layer_set_text(cond_layer, "RAINY");
+  } else if (c < 700) {
+    text_layer_set_text(cond_layer, "SNOWY");
+  } else if (c < 771) {
+    text_layer_set_text(cond_layer, "FOGGY");
+  } else if (c < 800) {
+    text_layer_set_text(cond_layer, "WINDY");
+  } else if (c == 800) {
+    text_layer_set_text(cond_layer, "CLEAR");
+  } else if (c < 804) {
+    text_layer_set_text(cond_layer, "P.CLOUDY");
+  } else if (c == 804) {
+    text_layer_set_text(cond_layer, "CLOUDY");
+  } else if ((c >= 900 && c < 903) || (c > 904 && c < 1000)) {
+    text_layer_set_text(cond_layer, "WINDY");
+  } else if (c == 903) {
+    text_layer_set_text(cond_layer, "COLD");
+  } else if (c == 904) {
+    text_layer_set_text(cond_layer, "HOT");
+  } else {
+    text_layer_set_text(cond_layer, "HMM");
+  }
 }
 
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
@@ -118,34 +150,8 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
         snprintf(temp_text, sizeof(temp_text), "%i%s", weather_data->temperature, stale ? " " : "°");
         text_layer_set_text(temp_layer, temp_text);
         
-
-        int c = weather_data->condition;
-        if (c < 300) {
-          text_layer_set_text(cond_layer, "STORMY");
-        } else if (c < 500) {
-          text_layer_set_text(cond_layer, "DRIZZLE");
-        } else if (c < 600) {
-          text_layer_set_text(cond_layer, "RAINY");
-        } else if (c < 700) {
-          text_layer_set_text(cond_layer, "SNOWY");
-        } else if (c < 771) {
-          text_layer_set_text(cond_layer, "FOGGY");
-        } else if (c < 800) {
-          text_layer_set_text(cond_layer, "WINDY");
-        } else if (c == 800) {
-          text_layer_set_text(cond_layer, "CLEAR");
-        } else if (c < 804) {
-          text_layer_set_text(cond_layer, "P.CLOUDY");
-        } else if (c == 804) {
-          text_layer_set_text(cond_layer, "CLOUDY");
-        } else if ((c >= 900 && c < 903) || (c > 904 && c < 1000)) {
-          text_layer_set_text(cond_layer, "WINDY");
-        } else if (c == 903) {
-          text_layer_set_text(cond_layer, "COLD");
-        } else if (c == 904) {
-          text_layer_set_text(cond_layer, "HOT");
-        } else {
-          text_layer_set_text(cond_layer, "HMM");
+        if (!currently_displaying_batt){
+          display_weather_condition();
         }
       }
       last_updated_weather = weather_data->updated;
@@ -172,6 +178,25 @@ static void setColour(bool dark) {
   text_layer_set_text_color(date_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_text_color(temp_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_text_color(cond_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
+}
+
+void handleTimer(void *data){
+  currently_displaying_batt = false;
+  display_weather_condition();
+}
+
+void accel_tap_handler(AccelAxisType axis, int32_t direction) {
+  static time_t lastTapTime = 0;
+  time_t currentTime = time(NULL);
+  if ((currentTime - lastTapTime) < 6) {  // this is our second tap-accel event in <6s
+     BatteryChargeState battState = battery_state_service_peek();
+     static char battery_text[] = "BATT: 100%";
+     snprintf(battery_text, sizeof(battery_text), "BATT: %d%%", battState.charge_percent);
+     currently_displaying_batt = true;
+     text_layer_set_text(cond_layer, battery_text);
+     app_timer_register(5000, handleTimer, NULL);
+  }
+  lastTapTime = currentTime;
 }
 
 static void init(void) {
@@ -230,11 +255,15 @@ static void init(void) {
   handle_tick(localtime(&now), SECOND_UNIT | MINUTE_UNIT | HOUR_UNIT | DAY_UNIT );
   // And then every second
   tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
+
+  // Add an accel tap watcher
+  accel_tap_service_subscribe(&accel_tap_handler);
 }
 
 static void deinit(void) {
   window_destroy(window);
   tick_timer_service_unsubscribe();
+  accel_tap_service_unsubscribe();
 
   text_layer_destroy(time_layer);
   text_layer_destroy(day_layer);
