@@ -1,3 +1,11 @@
+//
+//  pebble-js-app.js
+//  French for Future
+//
+//  Created by Julian Lepinski on 2014-02-12
+//  Based on Futura Weather by Niknam (https://github.com/Niknam/futura-weather-sdk2.0)
+//
+
 var temperatureOverride = false;
 var temperatureInC = true;
 

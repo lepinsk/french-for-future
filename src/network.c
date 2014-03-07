@@ -1,3 +1,11 @@
+//
+//  network.c
+//  French for Future
+//
+//  Created by Julian Lepinski on 2014-02-12
+//  Based on Futura Weather by Niknam (https://github.com/Niknam/futura-weather-sdk2.0)
+//
+
 #include <pebble.h>
 #include "network.h"
 
@@ -17,24 +25,22 @@ static void appmsg_in_received(DictionaryIterator *received, void *context) {
     weather->error = WEATHER_E_OK;
     weather->updated = time(NULL);
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Got temperature %i and condition %i", weather->temperature, weather->condition);
-  }
-  else if (error_tuple) {
+  } else if (error_tuple) {
     weather->error = WEATHER_E_NETWORK;
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Got error %s", error_tuple->value->cstring);
   } else if (colourscheme_tuple){
     const char *colourScheme = colourscheme_tuple->value->cstring;
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Got colour scheme %s", colourscheme_tuple->value->cstring);
-    if (strcmp(colourScheme, "light") == 0){
+    if (strcmp(colourScheme, "light") == 0) {
       APP_LOG(APP_LOG_LEVEL_DEBUG, "parsed that as light");
       cbf(false);
-    } else if (strcmp(colourScheme, "dark") == 0){
+    } else if (strcmp(colourScheme, "dark") == 0) {
       APP_LOG(APP_LOG_LEVEL_DEBUG, "parsed that as dark");
       cbf(true);
     } else {
       APP_LOG(APP_LOG_LEVEL_DEBUG, "failed to parse the colour scheme");
     }
-  }
-  else {
+  } else {
     weather->error = WEATHER_E_PHONE;
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Got message with unknown keys... temperature=%p condition=%p error=%p",
       temperature_tuple, condition_tuple, error_tuple);
@@ -73,8 +79,7 @@ static void appmsg_out_failed(DictionaryIterator *failed, AppMessageResult reaso
   }
 }
 
-void init_network(WeatherData *weather_data, void (*callbackFunction)(bool))
-{
+void init_network(WeatherData *weather_data, void (*callbackFunction)(bool)) {
   cbf = callbackFunction;
   app_message_register_inbox_received(appmsg_in_received);
   app_message_register_inbox_dropped(appmsg_in_dropped);
@@ -88,13 +93,11 @@ void init_network(WeatherData *weather_data, void (*callbackFunction)(bool))
 
 }
 
-void close_network()
-{
+void close_network() {
   app_message_deregister_callbacks();
 }
 
-void request_weather()
-{
+void request_weather() {
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);
 

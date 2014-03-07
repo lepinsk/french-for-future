@@ -1,14 +1,16 @@
+//
+//  main.c
+//  French for Future
+//
+//  Created by Julian Lepinski on 2014-02-12
+//  Based on Futura Weather by Niknam (https://github.com/Niknam/futura-weather-sdk2.0)
+//
+
 #include <pebble.h>
 
 #include "network.h"
 #include "config.h"
 #include <ctype.h>
-
-#define DAY_FRAME       (GRect(0,   16,   144, 168-62))
-#define TIME_FRAME      (GRect(0,   32,   144, 168-20))
-#define DATE_FRAME      (GRect(0,   90,   144, 168-62))
-#define TEMP_FRAME      (GRect(10,  135,  134, 168-62))
-#define COND_FRAME      (GRect(0,   135,  134, 168-62))
 
 static WeatherData *weather_data;
 
@@ -22,10 +24,10 @@ static TextLayer *cond_layer;
 GBitmap *line_bmp;
 BitmapLayer *line_layer;
 
-static char date_text[] = "XXXXXXXXX 00";
-static char day_text[] = "XXXXXXXXX";
-static char time_text[] = "00:00";
-static char temp_text[] = "XXXXX";
+static char date_text[]   = "XXXXXXXXX 00";
+static char day_text[]    = "XXXXXXXXX";
+static char time_text[]   = "00:00";
+static char temp_text[]   = "XXXXX";
 
 GFont font_date;
 GFont font_time;
@@ -153,8 +155,8 @@ static void setColour(bool dark) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "setColour called: dark=false");
     bg_colour_is_black = false;
   }
-  window_set_background_color(window, bg_colour_is_black ? GColorBlack : GColorWhite);
-  text_layer_set_text_color(day_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
+  window_set_background_color(window,   bg_colour_is_black ? GColorBlack : GColorWhite);
+  text_layer_set_text_color(day_layer,  bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_text_color(time_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_text_color(date_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
   text_layer_set_text_color(temp_layer, bg_colour_is_black ? GColorWhite : GColorBlack);
