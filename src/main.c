@@ -7,8 +7,8 @@
 #define DAY_FRAME       (GRect(0, 16, 144, 168-62))
 #define TIME_FRAME      (GRect(0, 32, 144, 168-20))
 #define DATE_FRAME      (GRect(0, 90, 144, 168-62))
-#define TEMP_FRAME      (GRect(10, 138, 134, 168-62))
-#define COND_FRAME      (GRect(0, 138, 134, 168-62))
+#define TEMP_FRAME      (GRect(10, 134, 134, 168-62))
+#define COND_FRAME      (GRect(0, 134, 134, 168-62))
 
 /* Keep a pointer to the current weather data as a global variable */
 static WeatherData *weather_data;
@@ -203,7 +203,7 @@ static void init(void) {
   weather_data = malloc(sizeof(WeatherData));
   init_network(weather_data, &setColour);
 
-  font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_16));
+  font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_18));
   font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_48));
 
   day_layer = text_layer_create(DAY_FRAME);
