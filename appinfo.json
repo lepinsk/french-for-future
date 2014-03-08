@@ -32,12 +32,14 @@
       {
         "name": "FONT_AVENIR_BOOK_SUBSET_18",
         "file": "fonts/Avenir-Book.ttf",
-        "type": "font"
+        "type": "font",
+        "characterRegex": "[A-Z0-9\u00b0 -:%]"
       },
       {
         "name": "FONT_AVENIR_BOOK_SUBSET_48",
         "file": "fonts/Avenir-Book.ttf",
-        "type": "font"
+        "type": "font",
+        "characterRegex": "[0-9 :]"
       }
     ]
   }
