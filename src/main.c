@@ -121,8 +121,8 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     if (just_launched){                                                             // after first launch, switch to once a minute for all future updates...
       just_launched = false;
 
-      tick_timer_service_unsubscribe();
-      tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
+    //  tick_timer_service_unsubscribe();
+    //  tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
     }
     static time_t last_updated_weather = -1;
 
