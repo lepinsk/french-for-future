@@ -173,8 +173,8 @@ void accel_tap_handler(AccelAxisType axis, int32_t direction) {
   static time_t lastTapTime = 0;
   if ((time(NULL) - lastTapTime) < 6) {                                           // this is our second tap-accel event in <6s
    BatteryChargeState battState = battery_state_service_peek();
-   static char battery_text[] = "BATT: 100%";
-   snprintf(battery_text, sizeof(battery_text), "BATT: %d%%", battState.charge_percent);
+   static char battery_text[] = "BAT:100%";
+   snprintf(battery_text, sizeof(battery_text), "BAT:%d%%", battState.charge_percent);
    currently_displaying_batt = true;
    text_layer_set_text(cond_layer, battery_text);
    app_timer_register(5000, handle_timer, NULL);
