@@ -6,7 +6,7 @@
 //  Based on Futura Weather by Niknam (https://github.com/Niknam/futura-weather-sdk2.0)
 //
 
-var temperatureOverride = false;
+var temperatureOverride = true;
 var temperatureInC = true;
 
 Pebble.addEventListener("ready", function(e) {

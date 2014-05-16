@@ -65,16 +65,13 @@ static void appmsg_out_failed(DictionaryIterator *failed, AppMessageResult reaso
   switch (reason) {
     case APP_MSG_NOT_CONNECTED:
       weather->error = WEATHER_E_DISCONNECTED;
-      request_weather();
       break;
     case APP_MSG_SEND_REJECTED:
     case APP_MSG_SEND_TIMEOUT:
       weather->error = WEATHER_E_PHONE;
-      request_weather();
       break;
     default:
       weather->error = WEATHER_E_PHONE;
-      request_weather();
       break;
   }
 }

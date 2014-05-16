@@ -138,6 +138,10 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
         }
       }
       last_updated_weather = weather_data->updated;
+    } else {
+      if (weather_data->error != WEATHER_E_OK) {
+        text_layer_set_text(cond_layer, "ERR");
+      }
     }
   }
 
