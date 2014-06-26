@@ -25,6 +25,8 @@ static int        condition_global;
 
 static bool s_weather_loaded = false;
 
+static bool charger_connected = NULL;
+
 static AppTimer *s_loading_timeout = NULL;
 
 GBitmap           *line_bmp;
@@ -152,15 +154,19 @@ void handle_timer(void *data){
   display_weather_condition();
 }
 
+void show_battery_state(){
+  BatteryChargeState battState = battery_state_service_peek();
+  static char battery_text[] = "BAT:100%";
+  snprintf(battery_text, sizeof(battery_text), "BAT:%d%%", battState.charge_percent);
+  currently_displaying_batt = true;
+  text_layer_set_text(cond_layer, battery_text);
+  app_timer_register(5000, handle_timer, NULL);
+}
+
 void accel_tap_handler(AccelAxisType axis, int32_t direction) {
   static time_t lastTapTime = 0;
   if ((time(NULL) - lastTapTime) < 6) {                                           // this is our second tap-accel event in <6s
-   BatteryChargeState battState = battery_state_service_peek();
-   static char battery_text[] = "BAT:100%";
-   snprintf(battery_text, sizeof(battery_text), "BAT:%d%%", battState.charge_percent);
-   currently_displaying_batt = true;
-   text_layer_set_text(cond_layer, battery_text);
-   app_timer_register(5000, handle_timer, NULL);
+   show_battery_state();
  }
  lastTapTime = time(NULL);
 }
@@ -201,6 +207,18 @@ static void handle_loading_timeout(void* unused) {
   s_loading_timeout = NULL;
   if (!s_weather_loaded) {
     handle_weather_error(WEATHER_E_PHONE);
+  }
+}
+
+static void handle_battery_state_change(BatteryChargeState charge_state) {
+  if (charge_state.is_plugged && !charger_connected) {
+    // we weren't plugged in and now we are
+    charger_connected = false;
+    show_battery_state();
+  } else if (!charge_state.is_plugged && charger_connected) {
+    // we were plugged in and now we're not
+    charger_connected = true;
+    show_battery_state();
   }
 }
 
@@ -256,6 +274,11 @@ static void init(void) {
   handle_tick(localtime(&now), SECOND_UNIT | MINUTE_UNIT | HOUR_UNIT | DAY_UNIT );      // Update the screen right away
   tick_timer_service_subscribe(SECOND_UNIT, handle_tick);                               // And then every second
 
+  // peek the battery state to set our initial charger value
+  BatteryChargeState battState = battery_state_service_peek();
+  charger_connected = battState.is_plugged;
+  battery_state_service_subscribe(&handle_battery_state_change);
+
   accel_tap_service_subscribe(&accel_tap_handler);                                      // Add an accel tap watcher
 
   if(bluetooth_connection_service_peek()) {
@@ -269,6 +292,7 @@ static void deinit(void) {
   window_destroy(window);
   tick_timer_service_unsubscribe();
   accel_tap_service_unsubscribe();
+  battery_state_service_unsubscribe();
 
   text_layer_destroy(time_layer);
   text_layer_destroy(day_layer);
