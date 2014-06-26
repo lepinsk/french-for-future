@@ -12,7 +12,7 @@
 #include "config.h"
 #include <ctype.h>
 
-static WeatherData *weather_data;
+#define LOADING_TIMEOUT 30000
 
 static Window     *window;
 static TextLayer  *date_layer;
@@ -20,6 +20,12 @@ static TextLayer  *day_layer;
 static TextLayer  *time_layer;
 static TextLayer  *temp_layer;
 static TextLayer  *cond_layer;
+
+static int        condition_global;
+
+static bool s_weather_loaded = false;
+
+static AppTimer *s_loading_timeout = NULL;
 
 GBitmap           *line_bmp;
 BitmapLayer       *line_layer;
@@ -46,34 +52,43 @@ char *upcase(char *str) {
 
 // loads the appropriate weather string into cond_layer
 static void display_weather_condition(){
-  int c = weather_data->condition;
-  if (c < 300) {
+  if (condition_global < 300) {
     text_layer_set_text(cond_layer, "STORMY");
-  } else if (c < 500) {
+  } else if (condition_global < 500) {
     text_layer_set_text(cond_layer, "DRIZZLE");
-  } else if (c < 600) {
+  } else if (condition_global < 600) {
     text_layer_set_text(cond_layer, "RAINY");
-  } else if (c < 700) {
+  } else if (condition_global < 700) {
     text_layer_set_text(cond_layer, "SNOWY");
-  } else if (c < 771) {
+  } else if (condition_global < 771) {
     text_layer_set_text(cond_layer, "FOGGY");
-  } else if (c < 800) {
+  } else if (condition_global < 800) {
     text_layer_set_text(cond_layer, "WINDY");
-  } else if (c == 800) {
+  } else if (condition_global == 800) {
     text_layer_set_text(cond_layer, "CLEAR");
-  } else if (c < 804) {
+  } else if (condition_global < 804) {
     text_layer_set_text(cond_layer, "P.CLOUDY");
-  } else if (c == 804) {
+  } else if (condition_global == 804) {
     text_layer_set_text(cond_layer, "CLOUDY");
-  } else if ((c >= 900 && c < 903) || (c > 904 && c < 1000)) {
+  } else if ((condition_global >= 900 && condition_global < 903) || (condition_global > 904 && condition_global < 1000)) {
     text_layer_set_text(cond_layer, "WINDY");
-  } else if (c == 903) {
+  } else if (condition_global == 903) {
     text_layer_set_text(cond_layer, "COLD");
-  } else if (c == 904) {
+  } else if (condition_global == 904) {
     text_layer_set_text(cond_layer, "HOT");
   } else {
     text_layer_set_text(cond_layer, "HMM");
   }
+}
+
+static void step_loading_animation() {
+  static int animation_step = 0;
+  if (animation_step == 0) {
+    text_layer_set_text(cond_layer, "LOADING ");
+  } else {
+    text_layer_set_text(cond_layer, "LOADING.");
+  }
+  animation_step = (animation_step + 1) % 2;
 }
 
 // called every 1s initially, then every 60s
@@ -109,43 +124,11 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
     text_layer_set_text(cond_layer, "LOADING ");
   }
 
-  if (weather_data->updated == 0 && weather_data->error == WEATHER_E_OK) {
-    static int animation_step = 0;
-    if (animation_step == 0) {
-      text_layer_set_text(cond_layer, "LOADING ");
-    } else {
-      text_layer_set_text(cond_layer, "LOADING.");
-    }
-    animation_step = (animation_step + 1) % 2;
-  } else {
-    if (just_launched){                                                             // after first launch, switch to once a minute for all future updates...
-      just_launched = false;
-
-    //  tick_timer_service_unsubscribe();
-    //  tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
-    }
-    static time_t last_updated_weather = -1;
-
-    if (weather_data->updated != last_updated_weather) {
-      if (weather_data->error) {
-        text_layer_set_text(cond_layer, "ERROR");
-      } else {
-        snprintf(temp_text, sizeof(temp_text), "%i%s", weather_data->temperature, "°");
-        text_layer_set_text(temp_layer, temp_text);
-        
-        if (!currently_displaying_batt){
-          display_weather_condition();
-        }
-      }
-      last_updated_weather = weather_data->updated;
-    } else {
-      if (weather_data->error != WEATHER_E_OK) {
-        text_layer_set_text(cond_layer, "ERR");
-      }
-    }
+  if (!s_weather_loaded) {
+    step_loading_animation();
   }
 
-  if (units_changed & MINUTE_UNIT && (tick_time->tm_min % 15) == 0) {             // Refresh the weather info every 15 minutes
+  if ((units_changed & MINUTE_UNIT) && (tick_time->tm_min % 15 == 0)) {             // Refresh the weather info every 15 minutes
     request_weather();
   }
 }
@@ -182,12 +165,52 @@ void accel_tap_handler(AccelAxisType axis, int32_t direction) {
  lastTapTime = time(NULL);
 }
 
+static void mark_weather_loaded(void) {
+  if (!s_weather_loaded) {
+    s_weather_loaded = true;
+    // We don't need to run this every second any more.
+    tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
+  }
+  if (s_loading_timeout != NULL) {
+    app_timer_cancel(s_loading_timeout);
+    s_loading_timeout = NULL;
+  }
+}
+
+static void handle_weather_update(WeatherData* weather) {
+
+  snprintf(temp_text, sizeof(temp_text), "%i%s", weather->temperature, "°");
+  text_layer_set_text(temp_layer, temp_text);
+
+  if (!currently_displaying_batt){
+    condition_global = weather->condition;
+    display_weather_condition();
+  }
+
+  mark_weather_loaded();
+}
+
+static void handle_weather_error(WeatherError error) {
+  // We apparently don't actually care what the error was at all.
+  text_layer_set_text(cond_layer, "ERR");
+
+  mark_weather_loaded();
+}
+
+static void handle_loading_timeout(void* unused) {
+  s_loading_timeout = NULL;
+  if (!s_weather_loaded) {
+    handle_weather_error(WEATHER_E_PHONE);
+  }
+}
+
 static void init(void) {
   window = window_create();
   window_stack_push(window, true);                                                // true= animated woo
 
-  weather_data = malloc(sizeof(WeatherData));
-  init_network(weather_data, &set_colour);
+  init_network();
+  set_weather_update_handler(handle_weather_update);
+  set_weather_error_handler(handle_weather_error);
 
   font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_18));
   font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_48));
@@ -234,6 +257,12 @@ static void init(void) {
   tick_timer_service_subscribe(SECOND_UNIT, handle_tick);                               // And then every second
 
   accel_tap_service_subscribe(&accel_tap_handler);                                      // Add an accel tap watcher
+
+  if(bluetooth_connection_service_peek()) {
+    s_loading_timeout = app_timer_register(LOADING_TIMEOUT, handle_loading_timeout, NULL);
+  } else {
+    handle_weather_error(WEATHER_E_DISCONNECTED);
+  }
 }
 
 static void deinit(void) {
@@ -250,8 +279,6 @@ static void deinit(void) {
 
   fonts_unload_custom_font(font_date);
   fonts_unload_custom_font(font_time);
-
-  free(weather_data);
 }
 
 int main(void) {
