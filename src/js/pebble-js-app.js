@@ -8,6 +8,7 @@
 
 var temperatureOverride = true;
 var temperatureInC = true;
+var useYahooWeather = true;
 
 Pebble.addEventListener("ready", function(e) {
     console.log("Starting ...");
@@ -35,7 +36,13 @@ function updateWeather() {
 function locationSuccess(pos) {
     var coordinates = pos.coords;
     console.log("Got coordinates: " + JSON.stringify(coordinates));
-    fetchWeather(coordinates.latitude, coordinates.longitude);
+    if (useYahooWeather){
+        console.log("Fetching weather data from Yahoo");
+        fetchWeatherYahoo(coordinates.latitude, coordinates.longitude);
+    } else {
+        console.log("Fetching weather data from OpenWeatherMap");
+        fetchWeatherOWM(coordinates.latitude, coordinates.longitude);
+    }
 }
 
 function locationError(err) {
@@ -44,7 +51,54 @@ function locationError(err) {
     updateInProgress = false;
 }
 
-function fetchWeather(latitude, longitude) {
+function getJSON(url, callback){
+    var req = new XMLHttpRequest();
+
+    req.open('GET', url, true);
+    req.onload = function(e) {
+        if (req.readyState == 4) {
+            if(req.status == 200) {
+                if (callback) callback(JSON.parse(req.responseText));
+            } else {
+                console.log("getJSON error; req.status: " + req.status);
+            }
+        } else {
+            console.log("getJSON error; req.readyState: " + req.readyState);
+        }
+    };
+
+    req.send(null);
+}
+
+function callYQL(query, callback){
+    var encodedQuery = 'http://query.yahooapis.com/v1/public/yql?q=' + encodeURIComponent(query) + '&format=json';
+
+    console.log("callYQL calling getJSON with url " + encodedQuery);
+    getJSON(encodedQuery, callback);
+}
+
+function fetchWeatherYahoo(latitude, longitude){
+    callYQL('select * from geo.placefinder where text="' + latitude + ',' + longitude + '" and gflags="R"', function(json){
+        var woeid = json.query.results.Result.woeid;
+        console.log("callYQL called back; woeid: " + woeid);
+        callYQL('select * from weather.forecast where woeid=' + woeid + ' and u="' + (temperatureInC ? "c" : "f") + '"' , function(json){
+            var condition = parseInt(json.query.results.channel.item.condition.code);
+            var temperature = parseInt(json.query.results.channel.item.condition.temp);
+            var current_time = current_time = Date.now() / 1000;
+
+            console.log("Temperature: " + temperature + " Condition: " + condition + " Now: " + Date.now() / 1000);
+                              
+            Pebble.sendAppMessage({
+                "condition": condition,
+                "temperature": temperature,
+                "current_time": current_time
+            });
+            updateInProgress = false;
+        });
+    });
+}
+
+function fetchWeatherOWM(latitude, longitude) {
     var response;
     var req = new XMLHttpRequest();
     req.open('GET', "http://api.openweathermap.org/data/2.5/weather?" +
@@ -113,23 +167,4 @@ Pebble.addEventListener("webviewclosed", function(e) {
     Pebble.sendAppMessage({
     	"colourscheme" : cs
     });
-/*
-    //store the settings
-    if (e.response) {
-        var config = JSON.parse(e.response);
-        console.log("Configuration window returned: " + JSON.stringify(config));
-
-        //set the params and log them
-        console.log("Stop Numbers: " + config.stop_num);
-        console.log("Route Numbers: " + config.route_num);
-
-        //store the lists and trigger a reload
-        localStorage.setItem("route_list", config.route_num);
-        localStorage.setItem("stop_num_list", config.stop_num);
-        stop_num_list = config.stop_num;
-        reload();
-    } else {
-        console.log("no response");
-    }
-*/
 });

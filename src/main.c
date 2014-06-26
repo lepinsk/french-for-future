@@ -27,6 +27,8 @@ static bool s_weather_loaded = false;
 
 static bool charger_connected = NULL;
 
+static bool use_yahoo_weather_conditions = true;
+
 static AppTimer *s_loading_timeout = NULL;
 
 GBitmap           *line_bmp;
@@ -54,32 +56,118 @@ char *upcase(char *str) {
 
 // loads the appropriate weather string into cond_layer
 static void display_weather_condition(){
-  if (condition_global < 300) {
-    text_layer_set_text(cond_layer, "STORMY");
-  } else if (condition_global < 500) {
-    text_layer_set_text(cond_layer, "DRIZZLE");
-  } else if (condition_global < 600) {
-    text_layer_set_text(cond_layer, "RAINY");
-  } else if (condition_global < 700) {
-    text_layer_set_text(cond_layer, "SNOWY");
-  } else if (condition_global < 771) {
-    text_layer_set_text(cond_layer, "FOGGY");
-  } else if (condition_global < 800) {
-    text_layer_set_text(cond_layer, "WINDY");
-  } else if (condition_global == 800) {
-    text_layer_set_text(cond_layer, "CLEAR");
-  } else if (condition_global < 804) {
-    text_layer_set_text(cond_layer, "P.CLOUDY");
-  } else if (condition_global == 804) {
-    text_layer_set_text(cond_layer, "CLOUDY");
-  } else if ((condition_global >= 900 && condition_global < 903) || (condition_global > 904 && condition_global < 1000)) {
-    text_layer_set_text(cond_layer, "WINDY");
-  } else if (condition_global == 903) {
-    text_layer_set_text(cond_layer, "COLD");
-  } else if (condition_global == 904) {
-    text_layer_set_text(cond_layer, "HOT");
+  if (use_yahoo_weather_conditions){
+    
+
+    if (condition_global < 5 || (condition_global >= 37 && condition_global <= 47)) {
+      text_layer_set_text(cond_layer, "STORMY");
+    } else if (condition_global < 10) {
+      text_layer_set_text(cond_layer, "DRIZZLE");
+    } else if (condition_global < 13) {
+      text_layer_set_text(cond_layer, "RAINY");
+    } else if (condition_global < 17) {
+      text_layer_set_text(cond_layer, "SNOWY");
+    } else if (condition_global < 18) {
+      text_layer_set_text(cond_layer, "HAILY");      
+    } else if (condition_global == 20) {
+      text_layer_set_text(cond_layer, "FOGGY");
+    } else if (condition_global < 24) {
+      text_layer_set_text(cond_layer, "WINDY");
+    } else if (condition_global < 35 && condition_global > 30) {
+      text_layer_set_text(cond_layer, "CLEAR");
+    } else if (condition_global == 29 || condition_global == 30 || condition_global == 27 || condition_global == 28) {
+      text_layer_set_text(cond_layer, "P.CLOUDY");
+    } else if (condition_global == 26) {
+      text_layer_set_text(cond_layer, "CLOUDY");
+    } else if (condition_global == 24) {
+      text_layer_set_text(cond_layer, "WINDY");
+    } else if (condition_global == 25) {
+      text_layer_set_text(cond_layer, "COLD");
+    } else if (condition_global == 36) {
+      text_layer_set_text(cond_layer, "HOT");
+    } else {
+      text_layer_set_text(cond_layer, "HMM");
+    }
+
+    /*
+    0 tornado
+    1 tropical storm
+    2 hurricane
+    3 severe thunderstorms
+    4 thunderstorms
+    5 mixed rain and snow
+    6 mixed rain and sleet
+    7 mixed snow and sleet
+    8 freezing drizzle
+    9 drizzle
+    10  freezing rain
+    11  showers
+    12  showers
+    13  snow flurries
+    14  light snow showers
+    15  blowing snow
+    16  snow
+    17  hail
+    18  sleet
+    19  dust
+    20  foggy
+    21  haze
+    22  smoky
+    23  blustery
+    24  windy
+    25  cold
+    26  cloudy
+    27  mostly cloudy (night)
+    28  mostly cloudy (day)
+    29  partly cloudy (night)
+    30  partly cloudy (day)
+    31  clear (night)
+    32  sunny
+    33  fair (night)
+    34  fair (day)
+    35  mixed rain and hail
+    36  hot
+    37  isolated thunderstorms
+    38  scattered thunderstorms
+    39  scattered thunderstorms
+    40  scattered showers
+    41  heavy snow
+    42  scattered snow showers
+    43  heavy snow
+    44  partly cloudy
+    45  thundershowers
+    46  snow showers
+    47  isolated thundershowers
+    */
+    
   } else {
-    text_layer_set_text(cond_layer, "HMM");
+    if (condition_global < 300) {
+      text_layer_set_text(cond_layer, "STORMY");
+    } else if (condition_global < 500) {
+      text_layer_set_text(cond_layer, "DRIZZLE");
+    } else if (condition_global < 600) {
+      text_layer_set_text(cond_layer, "RAINY");
+    } else if (condition_global < 700) {
+      text_layer_set_text(cond_layer, "SNOWY");
+    } else if (condition_global < 771) {
+      text_layer_set_text(cond_layer, "FOGGY");
+    } else if (condition_global < 800) {
+      text_layer_set_text(cond_layer, "WINDY");
+    } else if (condition_global == 800) {
+      text_layer_set_text(cond_layer, "CLEAR");
+    } else if (condition_global < 804) {
+      text_layer_set_text(cond_layer, "P.CLOUDY");
+    } else if (condition_global == 804) {
+      text_layer_set_text(cond_layer, "CLOUDY");
+    } else if ((condition_global >= 900 && condition_global < 903) || (condition_global > 904 && condition_global < 1000)) {
+      text_layer_set_text(cond_layer, "WINDY");
+    } else if (condition_global == 903) {
+      text_layer_set_text(cond_layer, "COLD");
+    } else if (condition_global == 904) {
+      text_layer_set_text(cond_layer, "HOT");
+    } else {
+      text_layer_set_text(cond_layer, "HMM");
+    }
   }
 }
 
