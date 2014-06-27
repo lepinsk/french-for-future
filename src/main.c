@@ -139,7 +139,7 @@ static void display_weather_condition(){
     46  snow showers
     47  isolated thundershowers
     */
-    
+
   } else {
     if (condition_global < 300) {
       text_layer_set_text(cond_layer, "STORMY");
@@ -301,11 +301,11 @@ static void handle_loading_timeout(void* unused) {
 static void handle_battery_state_change(BatteryChargeState charge_state) {
   if (charge_state.is_plugged && !charger_connected) {
     // we weren't plugged in and now we are
-    charger_connected = false;
+    charger_connected = true;
     show_battery_state();
   } else if (!charge_state.is_plugged && charger_connected) {
     // we were plugged in and now we're not
-    charger_connected = true;
+    charger_connected = false;
     show_battery_state();
   }
 }
