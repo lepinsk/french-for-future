@@ -22,6 +22,7 @@ static TextLayer  *temp_layer;
 static TextLayer  *cond_layer;
 
 static int        condition_global;
+static int        condition_temp_global;
 
 static bool s_weather_loaded = false;
 
@@ -272,7 +273,7 @@ static void mark_weather_loaded(void) {
 }
 
 static void handle_weather_update(WeatherData* weather) {
-
+  condition_temp_global = weather->temperature;
   snprintf(temp_text, sizeof(temp_text), "%i%s", weather->temperature, "°");
   text_layer_set_text(temp_layer, temp_text);
 
@@ -285,8 +286,9 @@ static void handle_weather_update(WeatherData* weather) {
 }
 
 static void handle_weather_error(WeatherError error) {
-  // We apparently don't actually care what the error was at all.
-  text_layer_set_text(cond_layer, "ERR");
+  // ditch our degree symbol when we've lost our connection
+  snprintf(temp_text, sizeof(temp_text), "%i%s", condition_temp_global, " ");
+  text_layer_set_text(temp_layer, temp_text);
 
   mark_weather_loaded();
 }
