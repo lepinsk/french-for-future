@@ -1,5 +1,5 @@
 //
-//  config.h
+//  layouts.h
 //  French for Future
 //
 //  Created by Julian Lepinski on 2014-02-12
