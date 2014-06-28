@@ -18,7 +18,7 @@
     "colourscheme": 6,
     "request_update": 42
   },
-  "capabilities": ["location", "configurable"],
+  "capabilities": ["location"],
   "resources": {
     "media": [
       {

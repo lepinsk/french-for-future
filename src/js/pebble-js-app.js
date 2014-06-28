@@ -91,19 +91,3 @@ function fetchWeatherYahoo(latitude, longitude){
         });
     });
 }
-
-Pebble.addEventListener("showConfiguration", function(e) {
-    console.log("Showing configuration");
-    Pebble.openURL('http://debaclesoftware.com/fff/index.html');
-});
-
-Pebble.addEventListener("webviewclosed", function(e) {
-    console.log("Closing webview");
-    var JSP = JSON.parse(e.response);
-    var cs = JSP["colourScheme"];
-
-    console.log(cs);
-    Pebble.sendAppMessage({
-    	"colourscheme" : cs
-    });
-});
