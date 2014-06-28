@@ -78,7 +78,7 @@ static void display_weather_condition(){
     text_layer_set_text(cond_layer, "SLEET");
   } else if (cond_g == 13 || cond_g == 16 || cond_g == 41 || cond_g == 42 || cond_g == 43 || cond_g == 7 || cond_g == 14 || cond_g == 15 || cond_g == 46 ) {     
     text_layer_set_text(cond_layer, "SNOWY");
-  } else if (cond_g == 11 || cond_g == 12 || cond_g == 40 || cond_g == 5 || cond_g == 8 || cond_g == 10 || cond_g == 35) {     
+  } else if (cond_g == 11 || cond_g == 12 || cond_g == 40 || cond_g == 5 || cond_g == 6 || cond_g == 8 || cond_g == 10 || cond_g == 35) {     
     text_layer_set_text(cond_layer, "RAINY");
   } else if (cond_g == 1 || cond_g == 3 || cond_g == 4 || cond_g == 37 || cond_g == 38 || cond_g == 39 || cond_g == 45 || cond_g == 47) {     
     text_layer_set_text(cond_layer, "STORMY");

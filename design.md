@@ -31,7 +31,7 @@ In practice, we've had to nudge our frames around quite a bit. Check ```layouts.
 * hot - 36
 * sleet - 18
 * snowy - 13, 16, 41, 42, 43, 7, 14, 15, 46
-* rainy - 11, 12, 40, 5, , 8, 10, 35
+* rainy - 11, 12, 40, 5, 6, 8, 10, 35
 * stormy - 1, 3, 4, 37, 38, 39, 45, 47
 * windy - 23, 24
 * hail - 17
