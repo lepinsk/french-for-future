@@ -9,7 +9,7 @@
 #include <pebble.h>
 
 #include "network.h"
-#include "config.h"
+#include "layouts.h"
 #include <ctype.h>
 
 #define LOADING_TIMEOUT 30000
