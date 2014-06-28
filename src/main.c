@@ -21,7 +21,7 @@ static TextLayer  *time_layer;
 static TextLayer  *temp_layer;
 static TextLayer  *cond_layer;
 
-static int        condition_global;
+static int        cond_g;
 static int        condition_temp_global;
 
 static bool s_weather_loaded = false;
@@ -55,86 +55,46 @@ char *upcase(char *str) {
 
 // loads the appropriate weather string into cond_layer
 static void display_weather_condition(){
-  if (condition_global < 5 || (condition_global >= 37 && condition_global <= 47)) {
-    text_layer_set_text(cond_layer, "STORMY");
-  } else if (condition_global < 10) {
-    text_layer_set_text(cond_layer, "DRIZZLE");
-  } else if (condition_global < 13) {
-    text_layer_set_text(cond_layer, "RAINY");
-  } else if (condition_global < 17) {
-    text_layer_set_text(cond_layer, "SNOWY");
-  } else if (condition_global < 18) {
-    text_layer_set_text(cond_layer, "HAILY");      
-  } else if (condition_global == 20) {
-    text_layer_set_text(cond_layer, "FOGGY");
-  } else if (condition_global < 24) {
-    text_layer_set_text(cond_layer, "WINDY");
-  } else if (condition_global < 35 && condition_global > 30) {
+  // a full list of condition types can be found in design.md
+  if (cond_g == 0) {
+    text_layer_set_text(cond_layer, "TORNADO");
+  } else if (cond_g == 32) { 
+    text_layer_set_text(cond_layer, "SUNNY");
+  } else if (cond_g == 31 || cond_g == 33 || cond_g == 34) {     
     text_layer_set_text(cond_layer, "CLEAR");
-  } else if (condition_global == 29 || condition_global == 30 || condition_global == 27 || condition_global == 28) {
-    text_layer_set_text(cond_layer, "P.CLOUDY");
-  } else if (condition_global == 26) {
+  } else if (cond_g == 29 || cond_g == 30 || cond_g == 44) {     
+    text_layer_set_text(cond_layer, "P. CLOUDY");
+  } else if (cond_g == 26 || cond_g == 27 || cond_g == 28) {     
     text_layer_set_text(cond_layer, "CLOUDY");
-  } else if (condition_global == 24) {
-    text_layer_set_text(cond_layer, "WINDY");
-  } else if (condition_global == 25) {
+  } else if (cond_g == 25) {     
     text_layer_set_text(cond_layer, "COLD");
-  } else if (condition_global == 36) {
+  } else if (cond_g == 9) {     
+    text_layer_set_text(cond_layer, "DRIZZLE");
+  } else if (cond_g == 20) {     
+    text_layer_set_text(cond_layer, "FOGGY");
+  } else if (cond_g == 36) {     
     text_layer_set_text(cond_layer, "HOT");
-  } else {
-    text_layer_set_text(cond_layer, "HMM");
+  } else if (cond_g == 18) {     
+    text_layer_set_text(cond_layer, "SLEET");
+  } else if (cond_g == 13 || cond_g == 16 || cond_g == 41 || cond_g == 42 || cond_g == 43 || cond_g == 7 || cond_g == 14 || cond_g == 15 || cond_g == 46 ) {     
+    text_layer_set_text(cond_layer, "SNOWY");
+  } else if (cond_g == 11 || cond_g == 12 || cond_g == 40 || cond_g == 5 || cond_g == 8 || cond_g == 10 || cond_g == 35) {     
+    text_layer_set_text(cond_layer, "RAINY");
+  } else if (cond_g == 1 || cond_g == 3 || cond_g == 4 || cond_g == 37 || cond_g == 38 || cond_g == 39 || cond_g == 45 || cond_g == 47) {     
+    text_layer_set_text(cond_layer, "STORMY");
+  } else if (cond_g == 23 || cond_g == 24) {     
+    text_layer_set_text(cond_layer, "WINDY");
+  } else if (cond_g == 17) {     
+    text_layer_set_text(cond_layer, "HAIL");
+  } else if (cond_g == 19) {     
+    text_layer_set_text(cond_layer, "DUSTY");
+  } else if (cond_g == 21) {     
+    text_layer_set_text(cond_layer, "HAZY");
+  } else if (cond_g == 22) {     
+    text_layer_set_text(cond_layer, "SMOKY");
+  } else {     
+    text_layer_set_text(cond_layer, "UHH");
   }
-
-  /*
-  0 tornado
-  1 tropical storm
-  2 hurricane
-  3 severe thunderstorms
-  4 thunderstorms
-  5 mixed rain and snow
-  6 mixed rain and sleet
-  7 mixed snow and sleet
-  8 freezing drizzle
-  9 drizzle
-  10  freezing rain
-  11  showers
-  12  showers
-  13  snow flurries
-  14  light snow showers
-  15  blowing snow
-  16  snow
-  17  hail
-  18  sleet
-  19  dust
-  20  foggy
-  21  haze
-  22  smoky
-  23  blustery
-  24  windy
-  25  cold
-  26  cloudy
-  27  mostly cloudy (night)
-  28  mostly cloudy (day)
-  29  partly cloudy (night)
-  30  partly cloudy (day)
-  31  clear (night)
-  32  sunny
-  33  fair (night)
-  34  fair (day)
-  35  mixed rain and hail
-  36  hot
-  37  isolated thunderstorms
-  38  scattered thunderstorms
-  39  scattered thunderstorms
-  40  scattered showers
-  41  heavy snow
-  42  scattered snow showers
-  43  heavy snow
-  44  partly cloudy
-  45  thundershowers
-  46  snow showers
-  47  isolated thundershowers
-  */
 }
 
 static void step_loading_animation() {
@@ -242,8 +202,9 @@ static void handle_weather_update(WeatherData* weather) {
   snprintf(temp_text, sizeof(temp_text), "%i%s", weather->temperature, "°");
   text_layer_set_text(temp_layer, temp_text);
 
+  cond_g = weather->condition;
+
   if (!currently_displaying_batt){
-    condition_global = weather->condition;
     display_weather_condition();
   }
 
