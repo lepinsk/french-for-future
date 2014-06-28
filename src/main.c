@@ -246,7 +246,7 @@ static void init(void) {
   set_weather_update_handler(handle_weather_update);
   set_weather_error_handler(handle_weather_error);
 
-  font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_18));
+  font_date = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_RAW_FONT_AVENIR_BOOK_SUBSET_18));
   font_time = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_AVENIR_BOOK_SUBSET_48));
 
   day_layer = text_layer_create(DAY_FRAME);

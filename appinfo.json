@@ -31,6 +31,11 @@
         "file": "images/dots.png"
       },
       {
+        "type": "raw",
+        "name": "RAW_FONT_AVENIR_BOOK_SUBSET_18",
+        "file": "fonts/Avenir-Book.ttf.FONT_AVENIR_BOOK_SUBSET_18.fixed.pfo"
+      },
+      {
         "name": "FONT_AVENIR_BOOK_SUBSET_18",
         "file": "fonts/Avenir-Book.ttf",
         "type": "font",
