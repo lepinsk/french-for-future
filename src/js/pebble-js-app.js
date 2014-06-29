@@ -34,7 +34,7 @@ function updateWeather() {
 
 function locationSuccess(pos) {
     var coordinates = pos.coords;
-    console.log("Got coordinates: " + JSON.stringify(coordinates));
+    console.log("Got coordinates - lat: " + coordinates.latitude + "; long: " + coordinates.longitude);
     console.log("Fetching weather data from Yahoo");
     fetchWeatherYahoo(coordinates.latitude, coordinates.longitude);
 }
@@ -67,7 +67,7 @@ function getJSON(url, callback){
 function callYQL(query, callback){
     var encodedQuery = 'http://query.yahooapis.com/v1/public/yql?q=' + encodeURIComponent(query) + '&format=json';
 
-    console.log("callYQL calling getJSON with url " + encodedQuery);
+    console.log("callYQL calling getJSON with YQL query '" + query + "'");
     getJSON(encodedQuery, callback);
 }
 
