@@ -4,7 +4,7 @@
   "longName": "French for Future",
   "companyName": "Debacle Software",
   "versionCode": 2,
-  "versionLabel": "0.1.0",
+  "versionLabel": "0.1",
   "watchapp": {
     "watchface": true
   },
@@ -16,7 +16,9 @@
     "colourscheme": 6,
     "request_update": 42
   },
-  "capabilities": ["location"],
+  "capabilities": [
+    "location"
+  ],
   "resources": {
     "media": [
       {
@@ -48,5 +50,10 @@
         "characterRegex": "[0-9 :]"
       }
     ]
-  }
+  },
+  "targetPlatforms": [
+    "aplite",
+    "basalt"
+  ],
+  "sdkVersion": "3"
 }
